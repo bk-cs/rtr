@@ -1,0 +1,37 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "OriginalFilename": {
+      "type": "string"
+    },
+    "FileDescription": {
+      "type": "string"
+    },
+    "ProductName": {
+      "type": "string"
+    },
+    "CompanyName": {
+      "type": "string"
+    },
+    "FileName": {
+      "type": "string"
+    },
+    "FileVersion": {
+      "type": "string"
+    },
+    "Sha256": {
+      "type": "string",
+      "format": "sha256"
+    }
+  },
+  "required": [
+    "OriginalFilename",
+    "FileDescription",
+    "ProductName",
+    "CompanyName",
+    "FileName",
+    "FileVersion",
+    "Sha256"
+  ],
+  "type":"object"
+}

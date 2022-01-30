@@ -1,0 +1,30 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Sid": {
+      "type": "string"
+    },
+    "LocalPath": {
+      "type": "string",
+      "format": "localFilePath"
+    },
+    "RoamingPath": {
+      "type": "string",
+      "format": "localFilePath"
+    },
+    "RoamingConfigured": {
+      "type": "boolean"
+    },
+    "LastUseTime": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Sid",
+    "LocalPath",
+    "RoamingPath",
+    "RoamingConfigured",
+    "LastUseTime"
+  ],
+  "type": "object"
+}

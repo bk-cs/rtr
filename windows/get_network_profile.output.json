@@ -1,0 +1,32 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "InterfaceAlias": {
+      "type": "string"
+    },
+    "InterfaceIndex": {
+      "type": "string"
+    },
+    "NetworkCategory": {
+      "type": "string"
+    },
+    "IPv4Connectivity": {
+      "type": "string"
+    },
+    "IPv6Connectivity": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Name",
+    "InterfaceAlias",
+    "InterfaceIndex",
+    "NetworkCategory",
+    "IPv4Connectivity",
+    "IPv6Connectivity"
+  ],
+  "type": "object"
+}

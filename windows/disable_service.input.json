@@ -1,0 +1,15 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "Log": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "Name"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,52 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "DestinationPrefix": {
+      "type": "string"
+    },
+    "InterfaceIndex": {
+      "type": "integer"
+    },
+    "InterfaceAlias": {
+      "type": "string"
+    },
+    "AddressFamily": {
+      "type": "integer"
+    },
+    "NextHop": {
+      "type": "string"
+    },
+    "Publish": {
+      "type": "integer"
+    },
+    "State": {
+      "type": "integer"
+    },
+    "RouteMetric": {
+      "type": "integer"
+    },
+    "InterfaceMetric": {
+      "type": "integer"
+    },
+    "Protocol": {
+      "type": "integer"
+    },
+    "PolicyStore": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "DestinationPrefix",
+    "InterfaceIndex",
+    "InterfaceAlias",
+    "AddressFamily",
+    "NextHop",
+    "Publish",
+    "State",
+    "RouteMetric",
+    "InterfaceMetric",
+    "Protocol",
+    "PolicyStore"
+  ],
+  "type": "object"
+}

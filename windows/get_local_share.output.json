@@ -1,0 +1,24 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "ScopeName": {
+      "type": "string"
+    },
+    "Description": {
+      "type": "string"
+    },
+    "Path": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Name",
+    "ScopeName",
+    "Description",
+    "Path"
+  ],
+  "type": "object"
+}

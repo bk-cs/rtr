@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Cloud" : {
+      "type": "string"
+    },
+    "Token" : {
+      "type": "string"
+    },
+    "Path" : {
+      "type": "string",
+      "format": "localFilePath"
+    }
+  },
+  "required": [
+    "Cloud",
+    "Token"
+  ],
+  "type": "object"
+}

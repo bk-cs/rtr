@@ -1,0 +1,52 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "Type": {
+      "type": "integer"
+    },
+    "ShareName": {
+      "type": "string"
+    },
+    "PortName": {
+      "type": "string"
+    },
+    "DriverName": {
+      "type": "string"
+    },
+    "Location": {
+      "type": "string"
+    },
+    "Shared": {
+      "type": "boolean"
+    },
+    "Published": {
+      "type": "boolean"
+    },
+    "DeviceType": {
+      "type": "integer"
+    },
+    "Priority": {
+      "type": "integer"
+    },
+    "PrinterStatus": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "Name",
+    "Type",
+    "ShareName",
+    "PortName",
+    "DriverName",
+    "Location",
+    "Shared",
+    "Published",
+    "DeviceType",
+    "Priority",
+    "PrinterStatus"
+  ],
+  "type": "object"
+}

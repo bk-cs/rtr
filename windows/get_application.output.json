@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "DisplayName": {
+      "type": "string"
+    },
+    "DisplayVersion": {
+      "type": "string"
+    },
+    "Publisher": {
+      "type": "string"
+    },
+    "InstallLocation": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "DisplayName",
+    "DisplayVersion",
+    "Publisher"
+  ],
+  "type": "object"
+}

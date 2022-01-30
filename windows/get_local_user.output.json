@@ -1,0 +1,46 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "FullName": {
+      "type": "string"
+    },
+    "Enabled": {
+      "type": "boolean"
+    },
+    "Sid": {
+      "type": "string"
+    },
+    "PasswordRequired": {
+      "type": "boolean"
+    },
+    "PasswordLastSet": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "PasswordExpires": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "PrincipalSource": {
+      "type": "integer"
+    },
+    "Description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Name",
+    "FullName",
+    "Enabled",
+    "Sid",
+    "PasswordRequired",
+    "PasswordLastSet",
+    "PasswordExpires",
+    "PrincipalSource",
+    "Description"
+  ],
+  "type": "object"
+}

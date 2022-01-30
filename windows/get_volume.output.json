@@ -1,0 +1,28 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "DriveLetter": {
+      "type": "string"
+    },
+    "FileSystemLabel": {
+      "type": "string"
+    },
+    "FileSystem": {
+      "type": "string"
+    },
+    "SizeRemaining": {
+      "type": "integer"
+    },
+    "NtPath": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "DriveLetter",
+    "FileSystemLabel",
+    "FileSystem",
+    "SizeRemaining",
+    "NtPath"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,32 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "ComputerName": {
+      "type": "string"
+    },
+    "RemoteAddress": {
+      "type": "string"
+    },
+    "RemotePort": {
+      "type": "integer"
+    },
+    "SourceAddress": {
+      "type": "string"
+    },
+    "InterfaceAlias": {
+      "type": "integer"
+    },
+    "TcpTestSucceeded": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "ComputerName",
+    "RemoteAddress",
+    "RemotePort",
+    "SourceAddress",
+    "InterfaceAlias",
+    "TcpTestSucceeded"
+  ],
+  "type": "object"
+}

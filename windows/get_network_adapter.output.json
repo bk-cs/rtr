@@ -1,0 +1,52 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "MacAddress": {
+      "type": "string"
+    },
+    "LinkSpeed": {
+      "type": "string"
+    },
+    "Virtual": {
+      "type": "boolean"
+    },
+    "Status": {
+      "type": "string"
+    },
+    "MediaConnectionState": {
+      "type": "integer"
+    },
+    "FullDuplex": {
+      "type": "boolean"
+    },
+    "DriverName": {
+      "type": "string"
+    },
+    "DriverVersionString": {
+      "type": "string"
+    },
+    "Ipv4Address": {
+      "type": "string"
+    },
+    "Ipv6Address": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Name",
+    "MacAddress",
+    "LinkSpeed",
+    "Virtual",
+    "Status",
+    "MediaConnectionState",
+    "FullDuplex",
+    "DriverName",
+    "DriverVersionString",
+    "Ipv4Address",
+    "Ipv6Address"
+  ],
+  "type": "object"
+}

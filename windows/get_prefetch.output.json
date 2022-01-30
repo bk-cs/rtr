@@ -1,0 +1,36 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "FullName": {
+      "type": "string"
+    },
+    "Length": {
+      "type": "integer"
+    },
+    "CreationTime": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "LastWriteTime": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "LastAccessTime": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "Sha256": {
+      "type": "string",
+      "format": "sha256"
+    }
+  },
+  "required": [
+    "FullName",
+    "Length",
+    "CreationTime",
+    "LastWriteTime",
+    "LastAccessTime",
+    "Sha256"
+  ],
+  "type": "object"
+}

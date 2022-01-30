@@ -1,0 +1,22 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Path": {
+      "type": "string"
+    },
+    "Filter": {
+      "type": "string"
+    },
+    "Include": {
+      "type": "string"
+    },
+    "Exclude": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Path",
+    "Filter"
+  ],
+  "type":"object"
+}

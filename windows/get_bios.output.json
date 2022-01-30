@@ -1,0 +1,24 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Manufacturer": {
+      "type": "string"
+    },
+    "Name": {
+      "type": "string"
+    },
+    "SerialNumber": {
+      "type": "string"
+    },
+    "Version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Manufacturer",
+    "Name",
+    "SerialNumber",
+    "Version"
+  ],
+  "type": "object"
+}

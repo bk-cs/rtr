@@ -1,0 +1,80 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "TpmPresent": {
+      "type": "boolean"
+    },
+    "TpmReady": {
+      "type": "boolean"
+    },
+    "TpmEnabled": {
+      "type": "boolean"
+    },
+    "TpmActivated": {
+      "type": "boolean"
+    },
+    "TpmOwned": {
+      "type": "boolean"
+    },
+    "RestartPending": {
+      "type": "boolean"
+    },
+    "ManufacturerId": {
+      "type": "integer"
+    },
+    "ManufacturerIdTxt": {
+      "type": "string"
+    },
+    "ManufacturerVersion": {
+      "type": "string"
+    },
+    "ManagedAuthLevel": {
+      "type": "string"
+    },
+    "OwnerAuth": {
+      "type": "string"
+    },
+    "OwnerClearDisabled": {
+      "type": "string"
+    },
+    "AutoProvisioning": {
+      "type": "string"
+    },
+    "LockedOut": {
+      "type": "boolean"
+    },
+    "LockoutHealTime": {
+      "type": "string"
+    },
+    "LockoutCount": {
+      "type": "string"
+    },
+    "LockoutMax": {
+      "type": "string"
+    },
+    "SelfTest": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "TpmPresent",
+    "TpmReady",
+    "TpmEnabled",
+    "TpmActivated",
+    "TpmOwned",
+    "RestartPending",
+    "ManufacturerId",
+    "ManufacturerIdTxt",
+    "ManufacturerVersion",
+    "ManagedAuthLevel",
+    "OwnerAuth",
+    "OwnerClearDisabled",
+    "AutoProvisioning",
+    "LockedOut",
+    "LockoutHealTime",
+    "LockoutCount",
+    "LockoutMax",
+    "SelfTest"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,32 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "UserId": {
+      "type": "string"
+    },
+    "Author": {
+      "type": "string"
+    },
+    "Enabled": {
+      "type": "string"
+    },
+    "Command": {
+      "type": "string"
+    },
+    "Arguments": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Name",
+    "UserId",
+    "Author",
+    "Enabled",
+    "Command",
+    "Arguments"
+  ],
+  "type": "object"
+}

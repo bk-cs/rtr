@@ -1,0 +1,15 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Destination": {
+      "type": "string"
+    },
+    "Port": {
+      "type": "integer"
+    },
+    "Log": {
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+}

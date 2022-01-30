@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "LastBootUpTime": {
+      "type": "integer",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "LastBootUpTime"
+  ],
+  "type": "object"
+}

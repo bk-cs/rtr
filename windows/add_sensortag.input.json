@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "SensorTag" : {
+      "type": "array"
+    },
+    "Log": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "SensorTag"
+  ],
+  "type": "object"
+}

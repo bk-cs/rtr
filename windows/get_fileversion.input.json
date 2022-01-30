@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Path" : {
+      "type": "string",
+      "format": "localFilePath"
+    },
+    "Log": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "Path"
+  ],
+  "type": "object"
+}

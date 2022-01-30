@@ -1,0 +1,24 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Share": {
+      "type": "string"
+    },
+    "RemotePath": {
+      "type": "string"
+    },
+    "UserName": {
+      "type": "string"
+    },
+    "Sid": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Share",
+    "RemotePath",
+    "UserName",
+    "Sid"
+  ],
+  "type": "object"
+}

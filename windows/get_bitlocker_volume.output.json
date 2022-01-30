@@ -1,0 +1,64 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "ComputerName": {
+      "type": "string"
+    },
+    "MountPoint": {
+      "type": "string"
+    },
+    "EncryptionMethod": {
+      "type": "integer"
+    },
+    "AutoUnlockEnabled": {
+      "type": "string"
+    },
+    "AutoUnlockKeyStored": {
+      "type": "boolean"
+    },
+    "MetadataVersion": {
+      "type": "integer"
+    },
+    "VolumeStatus": {
+      "type": "string"
+    },
+    "ProtectionStatus": {
+      "type": "integer"
+    },
+    "LockStatus": {
+      "type": "integer"
+    },
+    "EncryptionPercentage": {
+      "type": "integer"
+    },
+    "WipePercentage": {
+      "type": "integer"
+    },
+    "VolumeType": {
+      "type": "integer"
+    },
+    "CapacityGB": {
+      "type": "integer"
+    },
+    "KeyProtector": {
+      "type": "array"
+    }
+  },
+  "required": [
+    "ComputerName",
+    "MountPoint",
+    "EncryptionMethod",
+    "AutoUnlockEnabled",
+    "AutoUnlockKeyStored",
+    "MetadataVersion",
+    "VolumeStatus",
+    "ProtectionStatus",
+    "LockStatus",
+    "EncryptionPercentage",
+    "WipePercentage",
+    "VolumeType",
+    "CapacityGB",
+    "KeyProtector"
+  ],
+  "type": "object"
+}

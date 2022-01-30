@@ -1,0 +1,35 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "IPAddress": {
+      "type": "string"
+    },
+    "InterfaceIndex": {
+      "type": "integer"
+    },
+    "InterfaceAlias": {
+      "type": "string"
+    },
+    "AddressFamily": {
+      "type": "integer"
+    },
+    "LinkLayerAddress": {
+      "type": "string"
+    },
+    "State": {
+      "type": "integer"
+    },
+    "PolicyStore": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "IPAddress",
+    "InterfaceIndex",
+    "InterfaceAlias",
+    "AddressFamily",
+    "LinkLayerAddress",
+    "State"
+  ],
+  "type": "object"
+}

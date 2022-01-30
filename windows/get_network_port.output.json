@@ -1,0 +1,40 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Protocol": {
+      "type": "string"
+    },
+    "LocalAddress": {
+      "type": "string"
+    },
+    "LocalPort": {
+      "type": "integer"
+    },
+    "RemoteAddress": {
+      "type": "string"
+    },
+    "RemotePort": {
+      "type": "integer"
+    },
+    "State": {
+      "type": "string"
+    },
+    "OwningProcess": {
+      "type": "integer"
+    },
+    "OwningProcessName": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Protocol",
+    "LocalAddress",
+    "LocalPort",
+    "RemoteAddress",
+    "RemotePort",
+    "State",
+    "OwningProcess",
+    "OwningProcessName"
+  ],
+  "type": "object"
+}

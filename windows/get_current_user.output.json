@@ -1,0 +1,16 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "SessionId": {
+      "type": "integer"
+    },
+    "UserName": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "SessionId",
+    "UserName"
+  ],
+  "type": "object"
+}

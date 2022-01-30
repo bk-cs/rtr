@@ -1,0 +1,68 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "DisplayName": {
+      "type": "string"
+    },
+    "DisplayGroup": {
+      "type": "string"
+    },
+    "Enabled": {
+      "type": "string"
+    },
+    "Profile": {
+      "type": "string"
+    },
+    "Direction": {
+      "type": "string"
+    },
+    "Action": {
+      "type": "string"
+    },
+    "EdgeTraversalPolicy": {
+      "type": "integer"
+    },
+    "LooseSourceMapping": {
+      "type": "boolean"
+    },
+    "LocalOnlyMapping": {
+      "type": "boolean"
+    },
+    "Owner": {
+      "type": "string"
+    },
+    "PrimaryStatus": {
+      "type": "string"
+    },
+    "EnforcementStatus": {
+      "type": "string"
+    },
+    "PolicyStoreSource": {
+      "type": "string"
+    },
+    "PolicyStoreSourceType": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Name",
+    "DisplayName",
+    "DisplayGroup",
+    "Enabled",
+    "Profile",
+    "Direction",
+    "Action",
+    "EdgeTraversalPolicy",
+    "LooseSourceMapping",
+    "LocalOnlyMapping",
+    "Owner",
+    "PrimaryStatus",
+    "EnforcementStatus",
+    "PolicyStoreSource",
+    "PolicyStoreSourceType"
+  ],
+  "type": "object"
+}
