@@ -1,24 +1,25 @@
-# DESCRIPTION
+## DESCRIPTION
 Send Json files to Humio and delete them upon successful transmission. Defaults to all Json files located in
 the Rtr directory if 'Path' is not specified.
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Cloud
+## PARAMETER Cloud
 Base Humio cloud URL (Required)
 
-# PARAMETER Token
+## PARAMETER Token
 Humio ingestion token (Required)
 
-# PARAMETER Path
+## PARAMETER Path
 Path to a specific Json file
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="send_log" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
