@@ -1,17 +1,18 @@
-# DESCRIPTION
+## DESCRIPTION
 List local administrators
 
-# PARAMETER Filter
+## PARAMETER Filter
 Restrict list using a RegEx pattern
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_local_admin" -CommandLine=\`\`\`'{"Filter":"Username"}'\`\`\`
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
