@@ -1,20 +1,21 @@
-# DESCRIPTION
+## DESCRIPTION
 Attempt a TCP connection
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Destination
+## PARAMETER Destination
 Destination IP address or Hostname
 
-# PARAMETER Port
+## PARAMETER Port
 Destination TCP port
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="test_tcp_connection" -CommandLine=```'{"Destination":"google.com","Port":80}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
