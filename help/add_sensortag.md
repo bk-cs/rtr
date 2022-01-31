@@ -1,20 +1,20 @@
-# DESCRIPTION
+## DESCRIPTION
 Add 'SensorGroupingTag' values
 
-# PLATFORMS
+## PLATFORMS
 Mac, Linux, Windows
 
-# PARAMETER SensorTag
+## PARAMETER SensorTag
 One or more SensorTag values (Required)
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
 runscript -CloudFile="add_sensortag" -CommandLine=\`\`\`'{"SensorTag":["my","example","tags"]}'\`\`\`
 
-## PSFALCON
+### PSFALCON
 
-## FALCONPY
+### FALCONPY
