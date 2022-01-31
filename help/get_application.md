@@ -1,20 +1,21 @@
-# DESCRIPTION
+## DESCRIPTION
 List installed applications
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Filter
+## PARAMETER Filter
 Restrict list using a RegEx pattern
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_application" -CommandLine=\`\`\`'{"Filter":"CrowdStrike"}'\`\`\`
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
