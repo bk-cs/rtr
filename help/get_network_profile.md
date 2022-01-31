@@ -1,17 +1,18 @@
-# DESCRIPTION
+## DESCRIPTION
 List network profile information
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
-runscript -CloudFile="get_network_profile" -CommandLine=\`\`\`'{"Log":true}'\`\`\`
+### REAL-TIME RESPONSE
+```
+runscript -CloudFile="get_network_profile" -CommandLine=```'{"Log":true}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
