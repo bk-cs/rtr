@@ -1,20 +1,21 @@
-# DESCRIPTION
+## DESCRIPTION
 List FileVersionInfo for Portable Executable (PE) file
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Path
+## PARAMETER Path
 Path of the PE file
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_fileversion" -CommandLine=\`\`\`'{"Path":"C:\\Windows\\system32\\notepad.exe"}'\`\`\`
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
