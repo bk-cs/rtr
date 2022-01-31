@@ -1,17 +1,18 @@
-# SYNOPSIS
+## SYNOPSIS
 List connected printers
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_printer" -CommandLine=```'{"Log":true}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
