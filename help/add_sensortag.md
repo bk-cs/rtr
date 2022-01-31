@@ -13,7 +13,7 @@ Save results within a Json file in the Rtr directory
 # EXAMPLES
 
 ## REAL-TIME RESPONSE
-runscript -CloudFile="add_sensortag" -CommandLine=```'{"SensorTag":["my","example","tags"]}'```
+runscript -CloudFile="add_sensortag" -CommandLine=\`\`\`'{"SensorTag":["my","example","tags"]}'\`\`\`
 
 ## PSFALCON
 
