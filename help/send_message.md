@@ -1,20 +1,21 @@
-# DESCRIPTION
+## DESCRIPTION
 Display a pop-up message for all active users
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Message
+## PARAMETER Message
 Message to display
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="send_message" -CommandLine=```'{"Message":"This is an example"}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
