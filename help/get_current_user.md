@@ -1,17 +1,18 @@
-# DESCRIPTION
+## DESCRIPTION
 List user(s) that are currently logged in
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_current_user" -CommandLine=\`\`\`'{"Log":true}'\`\`\`
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
