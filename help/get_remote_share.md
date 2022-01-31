@@ -1,17 +1,18 @@
-# DESCRIPTION
+## DESCRIPTION
 List connected remote file shares
 
-# PLATFORMS
+## PLATFORMS
 Windows
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_remote_share" -CommandLine=```'{"Log":true}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
