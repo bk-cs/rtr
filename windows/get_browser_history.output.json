@@ -7,22 +7,14 @@
     "Browser": {
       "type": "string"
     },
-    "Name": {
-      "type": "string"
-    },
-    "Id": {
-      "type": "string"
-    },
-    "Version": {
+    "Domain": {
       "type": "string"
     }
   },
   "required": [
     "Username",
     "Browser",
-    "Name",
-    "Id",
-    "Version"
+    "Domain"
   ],
   "type": "object"
 }
