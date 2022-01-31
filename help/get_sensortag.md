@@ -1,17 +1,18 @@
-# DESCRIPTION
+## DESCRIPTION
 List 'SensorGroupingTag' values
 
-# PLATFORMS
+## PLATFORMS
 Mac, Linux, Windows
 
-# PARAMETER Log
+## PARAMETER Log
 Save results within a Json file in the Rtr directory
 
-# EXAMPLES
+## EXAMPLES
 
-## REAL-TIME RESPONSE
+### REAL-TIME RESPONSE
+```
 runscript -CloudFile="get_sensor_tag" -CommandLine=```'{"Log":true}'```
+```
+### PSFALCON
 
-## PSFALCON
-
-## FALCONPY
+### FALCONPY
