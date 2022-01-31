@@ -14,7 +14,7 @@ Save results within a Json file in the Rtr directory
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_browser_history" -CommandLine=\`\`\`'{"Filter":"crowdstrike\\.com"}'\`\`\`
+runscript -CloudFile="get_browser_history" -CommandLine=```'{"Filter":"crowdstrike\\.com"}'```
 ```
 ### PSFALCON
 
