@@ -20,7 +20,7 @@ An array of one or more string patterns to exclude
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="find_file" -CommandLine=\`\`\`'{"Path":"C:\\Windows","Filter":"*.exe"}'\`\`\`
+runscript -CloudFile="find_file" -CommandLine=```'{"Path":"C:\\Windows","Filter":"*.exe"}'```
 ```
 ### PSFALCON
 
