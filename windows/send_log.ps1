@@ -27,9 +27,9 @@ public static extern uint QueryDosDevice(
     foreach ($Volume in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
         $Value = $Kernel32::QueryDosDevice($Volume.DriveLetter,$StringBuilder,65536)
         $NtPath = [regex]::Escape($StringBuilder.ToString())
-        #$Param.Path | Where-Object { $_ -match $NtPath } | ForEach-Object {
+        $Param.Path | Where-Object { $_ -match $NtPath } | ForEach-Object {
             $Param.Path = $Param.Path -replace $NtPath, $Volume.DriveLetter
-        #}
+        }
     }
 }
 if (-not $Param.Path) {
