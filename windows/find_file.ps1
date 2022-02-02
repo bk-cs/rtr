@@ -23,7 +23,7 @@ $Script = {
         Write-Error "$(@{ message = $_ } | ConvertTo-Json -Compress)"
     }
 }
-$Inputs = @($Param.GetEnumerator().foreach{ "-$($_.Key) '$($_.Value)'" }) -join ' '
+$Inputs = @($Param.PSObject.Properties.foreach{ "-$($_.Name) '$($_.Value)'" }) -join ' '
 $Start = @{
     FilePath               = 'powershell.exe'
     ArgumentList           = "-Command &{$Script} $Inputs"
@@ -32,6 +32,6 @@ $Start = @{
     PassThru               = $true
 }
 Start-Process @Start | Select-Object Id, ProcessName | ForEach-Object {
-    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Log',(Split-Path $Json))))
+    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Log',$Rtr)))
     $_ | ConvertTo-Json -Compress
 }
