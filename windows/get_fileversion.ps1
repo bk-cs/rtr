@@ -1,5 +1,8 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-if ($Param.Path -match '^\\\\Device') {
+if ($Param.Path) {
+    $Param.Path = $Param.Path -replace '\\\\','\'
+}
+if ($Param.Path -match '^\\Device') {
 $Definition = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
