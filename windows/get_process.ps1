@@ -1,4 +1,5 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+$Json = "get_process_$((Get-Date).ToFileTimeUtc()).json"
 $Output = Get-Process -EA 0 | Select-Object Id, Name, StartTime, WorkingSet, CPU, HandleCount, Path |
 ForEach-Object {
     $_.PSObject.Properties | ForEach-Object {
@@ -14,6 +15,6 @@ foreach ($Item in $Output) {
 if ($Output -and $Param.Log -eq $true) {
     $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
     if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_process.json" }
+    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
 }
 $Output | ForEach-Object { $_ | ConvertTo-Json -Compress }

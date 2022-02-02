@@ -1,4 +1,5 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+$Json = "get_network_port_$((Get-Date).ToFileTimeUtc()).json"
 $Process = Get-Process | Select-Object Id, Name
 $Output = @(@(Get-NetTcpConnection -EA 0 | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State,
 OwningProcess) + @(Get-NetUDPEndpoint -EA 0 | Select-Object LocalAddress, LocalPort)) | ForEach-Object {
@@ -16,7 +17,6 @@ $Output | ForEach-Object {
 if ($Output -and $Param.Log -eq $true) {
     $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
     if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_network_port_$(
-        (Get-Date).ToFileTimeUtc()).json" }
+    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
 }
 $Output | ForEach-Object { $_ | ConvertTo-Json -Compress }

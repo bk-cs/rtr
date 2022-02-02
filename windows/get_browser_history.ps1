@@ -1,4 +1,5 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+$Json = "get_browser_history_$((Get-Date).ToFileTimeUtc()).json"
 $Output = foreach ($User in (Get-WmiObject Win32_UserProfile | Where-Object {
 $_.localpath -notmatch 'Windows' }).localpath) {
     foreach ($Path in @('AppData\Local\Google\Chrome\User Data\Default\History',
@@ -25,7 +26,6 @@ if ($Param.Filter) {
 if ($Output -and $Param.Log -eq $true) {
     $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
     if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_browser_history_$(
-        (Get-Date).ToFileTimeUtc()).json" }
+    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
 }
 $Output | ForEach-Object { $_ | ConvertTo-Json -Compress }

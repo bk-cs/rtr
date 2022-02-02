@@ -1,4 +1,5 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+$Json = "send_message_$((Get-Date).ToFileTimeUtc()).json"
 $Def = @"
 using System;
 using System.Runtime.InteropServices;
@@ -44,7 +45,7 @@ Sort-Object -Unique | ForEach-Object {
     if ($Output -and $Param.Log -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
         if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-        $Output >> "$Rtr\send_message_$((Get-Date).ToFileTimeUtc()).json"
+        $Output >> "$Rtr\$Json"
     }
     $Output
 }

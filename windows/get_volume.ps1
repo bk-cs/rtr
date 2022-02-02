@@ -1,4 +1,5 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+$Json = "get_volume_$((Get-Date).ToFileTimeUtc()).json"
 $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
@@ -17,7 +18,6 @@ FileSystem, SizeRemaining | ForEach-Object {
 if ($Output -and $Param.Log -eq $true) {
     $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
     if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_volume_$(
-        (Get-Date).ToFileTimeUtc()).json" }
+    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
 }
 $Output | ForEach-Object { $_ | ConvertTo-Json -Compress }
