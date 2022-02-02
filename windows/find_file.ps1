@@ -27,8 +27,8 @@ $Inputs = @($Param.PSObject.Properties.foreach{ "-$($_.Name) '$($_.Value)'" }) -
 $Start = @{
     FilePath               = 'powershell.exe'
     ArgumentList           = "-Command &{$Script} $Inputs"
-    RedirectStandardError  = "$Rtr\find_file.log"
-    RedirectStandardOutput = "$Rtr\find_file.json"
+    RedirectStandardError  = "$Rtr\find_file_$((Get-Date).ToFileTimeUtc()).log"
+    RedirectStandardOutput = "$Rtr\find_file_$((Get-Date).ToFileTimeUtc()).json"
     PassThru               = $true
 }
 Start-Process @Start | Select-Object Id, ProcessName | ForEach-Object {

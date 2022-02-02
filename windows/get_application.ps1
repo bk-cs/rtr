@@ -24,16 +24,13 @@ $Output = @('Microsoft\Windows\CurrentVersion\Uninstall',
 'Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall').foreach{
     grk "Software\$_" | Where-Object { $_.DisplayName -and $_.DisplayVersion -and $_.Publisher } |
     Select-Object DisplayName, DisplayVersion, Publisher, InstallLocation | ForEach-Object {
-        if ($Param.Filter) {
-            $_ | Where-Object { $_.DisplayName -match $Param.Filter }
-        } else {
-            $_
-        }
+        if ($Param.Filter) { $_ | Where-Object { $_.DisplayName -match $Param.Filter }} else { $_ }
     }
 }
 if ($Output -and $Param.Log -eq $true) {
     $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
     if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_application.json" }
+    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_application_$(
+        (Get-Date).ToFileTimeUtc()).json" }
 }
 $Output | ForEach-Object { $_ | ConvertTo-Json -Compress }

@@ -4,6 +4,7 @@ $Output = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct 
 if ($Output -and $Param.Log -eq $true) {
     $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
     if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_avproduct.json" }
+    $Output | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\get_avproduct_$(
+        (Get-Date).ToFileTimeUtc()).json" }
 }
 $Output | ForEach-Object { $_ | ConvertTo-Json -Compress }
