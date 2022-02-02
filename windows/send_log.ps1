@@ -1,4 +1,7 @@
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+if ($Param.Path) {
+    $Param.Path = $Param.Path -replace '\\\\','\'
+}
 @('Cloud','Token').foreach{
     if (!$Param.$_) {
         throw "Must provide '$_'."
@@ -9,9 +12,9 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
     }
 }
 if ($Param.Cloud -notmatch '/$') {
-    $Param.Cloud = $Param.Cloud += '/'
+    $Param.Cloud += '/'
 }
-if ($Param.Path -and $Param.Path -match '^\\\\Device') {
+if ($Param.Path -and $Param.Path -match '^\\Device') {
     $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
@@ -24,9 +27,9 @@ public static extern uint QueryDosDevice(
     foreach ($Volume in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
         $Value = $Kernel32::QueryDosDevice($Volume.DriveLetter,$StringBuilder,65536)
         $NtPath = [regex]::Escape($StringBuilder.ToString())
-        $Param.Path | Where-Object { $_ -match $NtPath } | ForEach-Object {
+        #$Param.Path | Where-Object { $_ -match $NtPath } | ForEach-Object {
             $Param.Path = $Param.Path -replace $NtPath, $Volume.DriveLetter
-        }
+        #}
     }
 }
 if (-not $Param.Path) {
