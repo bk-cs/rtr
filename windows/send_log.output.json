@@ -1,20 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "items": {
-    "properties": {
-      "Json": {
-        "type": "object",
-        "format": "localFilePath"
-      },
-      "Deleted": {
-        "type": "boolean"
-      },
-      "required": [
-        "Json",
-        "Deleted"
-      ]
+  "properties": {
+    "Cloud" : {
+      "type": "string"
     },
-    "type": "object"
+    "Token" : {
+      "type": "string"
+    },
+    "Path" : {
+      "type": "string",
+      "format": "localFilePath"
+    }
   },
-  "type": "array"
+  "required": [
+    "Cloud",
+    "Token"
+  ],
+  "type": "object"
 }
