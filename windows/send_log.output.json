@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "properties": {
-    "StatusCode": {
-      "type": "integer"
+  "items": {
+    "properties": {
+      "Json": {
+        "type": "object",
+        "format": "localFilePath"
+      },
+      "Deleted": {
+        "type": "boolean"
+      },
+      "required": [
+        "Json",
+        "Deleted"
+      ]
     },
-    "StatusDescription": {
-      "type": "string"
-    },
-    "Json": {
-      "type": "string",
-      "format": "localFilePath"
-    },
-    "Deleted": {
-      "type": "boolean"
-    }
+    "type": "object"
   },
-  "type": "object"
+  "type": "array"
 }
