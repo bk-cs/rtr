@@ -52,8 +52,8 @@ $Param.Path | ForEach-Object {
     }
     $Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a20' +
         '4-725362b67639}\Default'
-    if (Test-Path $Key) {
-        $Reg = reg query "$Key"
+    $Reg = reg query "$Key"
+    if ($Reg) {
         $Tags['cid'] = (($Reg -match "CU") -split "REG_BINARY")[-1].Trim().ToLower()
         $Tags['aid'] = (($Reg -match "AG") -split "REG_BINARY")[-1].Trim().ToLower()
     }
