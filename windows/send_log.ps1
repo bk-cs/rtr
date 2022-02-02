@@ -46,14 +46,16 @@ $Param.Path | ForEach-Object {
         throw "'$_' has an invalid extension."
     }
     $Json = try { Get-Content $_ | ConvertFrom-Json } catch { throw "Unable to parse '$($_)'." }
-    $Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a20' +
-        '4-725362b67639}\Default'
-    $Reg = reg query "$Key"
     $Tags = @{
-        cid    = (($Reg -match "CU") -split "REG_BINARY")[-1].Trim().ToLower()
-        aid    = (($Reg -match "AG") -split "REG_BINARY")[-1].Trim().ToLower()
         script = 'send_log.ps1'
         json   = Split-Path $_ -Leaf
+    }
+    $Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a20' +
+        '4-725362b67639}\Default'
+    if (Test-Path $Key) {
+        $Reg = reg query "$Key"
+        $Tags['cid'] = (($Reg -match "CU") -split "REG_BINARY")[-1].Trim().ToLower()
+        $Tags['aid'] = (($Reg -match "AG") -split "REG_BINARY")[-1].Trim().ToLower()
     }
     $Events = $Json | ForEach-Object {
         $Item = @{}
@@ -68,12 +70,9 @@ $Param.Path | ForEach-Object {
     }
     try {
         $Request = Invoke-WebRequest @Invoke -UseBasicParsing
-        if ($Request.StatusCode -eq 200) {
-            Remove-Item $_
-        }
+        [PSCustomObject] @{ Json = $_; Deleted = if ($Request.StatusCode -eq 200) {
+            Remove-Item $_; $true } else { $false }} | ConvertTo-Json -Compress
     } catch {
         throw $_.Exception.Message
     }
-    [PSCustomObject] @{ StatusCode = $Request.StatusCode; StatusDescription = $Request.StatusDescription;
-        Json = $_; Deleted = if (Test-Path $_) { $false } else { $true } } | ConvertTo-Json -Compress
 }
