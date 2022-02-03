@@ -106,26 +106,18 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
                 }
                 $Clone['events'] = @($Events)
                 $Clone = ConvertTo-Json @($Clone) -Depth 8 -Compress
-                $Output = try {
+                try {
                     $Request = Invoke-WebRequest @Invoke -Body $Clone -UseBasicParsing
                     if ($Request.StatusCode -eq 200) { Remove-Item $_ }
-                    [PSCustomObject] @{ Json = $_; Sent = 'true'; Deleted = 'true' }
-                } catch {
-                    [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false' }
-                }
-                $Output | ConvertTo-Json -Compress
+                } catch {}
             }
         }
-        $Rtr = Join-Path $env:SystemRoot '\system32\drivers\CrowdStrike\Rtr'
-        $Timestamp = (Get-Date).ToFileTimeUtc()
         $Start = @{
             FilePath               = 'powershell.exe'
             ArgumentList           = "-Command &{$Script} $($Param.Cloud) $($Param.Token) $Locked"
-            RedirectStandardError  = "$Rtr\send_log_$($Timestamp).log"
-            RedirectStandardOutput = "$Rtr\send_log_$($Timestamp).json"
             PassThru               = $true
         }
-        foreach ($Process in (Start-Process @Start)) {
+        Start-Process @Start | ForEach-Object {
             $Locked | ForEach-Object {
                 [PSCustomObject] @{ Json = $_; Send = 'pending'; Deleted = 'pending' } | ConvertTo-Json -Compress
             }
@@ -151,13 +143,12 @@ if (-not $Param.Path) {
     $Param.PSObject.Properties.Add((New-Object PSNoteProperty('Path',
         (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName)))
 }
-$Array = $Param.Path | ForEach-Object {
-    Confirm-FilePath $_ | ForEach-Object {
-        if ((Test-Path $_ -PathType Leaf) -and ($_ -match '\.json$')) {
-            $_
-        } else {
-            Write-Error "'$_' is not a json file."
-        }
+$Array = $Param.Path | ForEach-Object { Confirm-FilePath $_ }
+$Array | ForEach-Object {
+    if ((Test-Path $_) -eq $false) {
+        throw "Cannot find path '$_' because it does not exist."
+    } elseif ((Test-Path $_ -PathType Leaf) -eq $false -or ($_ -notmatch '\.json$')) {
+        throw "'$_' is not a json file."
     }
 }
 Send-ToHumio $Param.Cloud $Param.Token $Array
