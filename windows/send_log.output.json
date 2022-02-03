@@ -5,12 +5,16 @@
       "type": "string",
       "format": "localFilePath"
     },
+    "Sent": {
+      "type": "boolean"
+    },
     "Deleted" : {
       "type": "boolean"
     }
   },
   "required": [
     "Json",
+    "Sent",
     "Deleted"
   ],
   "type": "object"
