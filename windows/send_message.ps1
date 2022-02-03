@@ -1,5 +1,12 @@
+function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
+    if ($Object -and $Param.Log -eq $true) {
+        $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
+        if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
+        $Object | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
+    }
+    $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
+}
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Json = "send_message_$((Get-Date).ToFileTimeUtc()).json"
 $Def = @"
 using System;
 using System.Runtime.InteropServices;
@@ -31,21 +38,16 @@ return response;
 if (!([System.Management.Automation.PSTypeName]'WTSMessage').Type) {
     Add-Type -TypeDefinition $Def
 }
-Get-Process -IncludeUserName | Where-Object { $_.SessionId -ne 0 } | Select-Object SessionId, UserName |
+$Output = Get-Process -IncludeUserName | Where-Object { $_.SessionId -ne 0 } | Select-Object SessionId, UserName |
 Sort-Object -Unique | ForEach-Object {
     $Result = if ($_.SessionId) {
         [WTSMessage]::SendMessage($_.SessionId,'CrowdStrike Falcon',$Param.Message,15,0x00000040L)
     } else {
         "no_active_session"
     }
-    $Output = [PSCustomObject] @{
+    [PSCustomObject] @{
         Username = $_.UserName
         Message  = if ($Result -eq 1) { $Param.Message } else { $Result }
-    } | ConvertTo-Json -Compress
-    if ($Output -and $Param.Log -eq $true) {
-        $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-        $Output >> "$Rtr\$Json"
     }
-    $Output
 }
+Write-Output $Output $Param "send_message_$((Get-Date).ToFileTimeUtc()).json"
