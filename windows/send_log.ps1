@@ -1,5 +1,5 @@
 function Confirm-FilePath ([string] $String) {
-    if ($String -match '^\\Device') {
+    if ($String -match '^\\\\Device') {
         $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
