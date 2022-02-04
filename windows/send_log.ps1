@@ -1,5 +1,4 @@
 function Confirm-FilePath ([string] $String) {
-    $String = $String -replace '\\\\','\'
     if ($String -match '^\\Device') {
         $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
@@ -113,9 +112,9 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
             }
         }
         $Start = @{
-            FilePath               = 'powershell.exe'
-            ArgumentList           = "-Command &{$Script} $($Param.Cloud) $($Param.Token) $Locked"
-            PassThru               = $true
+            FilePath     = 'powershell.exe'
+            ArgumentList = "-Command &{$Script} $Cloud $Token $($Locked -join ', ')"
+            PassThru     = $true
         }
         Start-Process @Start | ForEach-Object {
             $Locked | ForEach-Object {
@@ -138,12 +137,12 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
         throw "'$($Param.$_)' is not a valid ingest token."
     }
 }
-if (-not $Param.Path) {
+[array] $Array = if ($Param.Path) {
+    $Param.Path | ForEach-Object { Confirm-FilePath $_ }
+} else {
     $Rtr = Join-Path $env:SystemRoot '\system32\drivers\CrowdStrike\Rtr'
-    $Param.PSObject.Properties.Add((New-Object PSNoteProperty('Path',
-        (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName)))
+    (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName
 }
-$Array = $Param.Path | ForEach-Object { Confirm-FilePath $_ }
 $Array | ForEach-Object {
     if ((Test-Path $_) -eq $false) {
         throw "Cannot find path '$_' because it does not exist."
