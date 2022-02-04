@@ -1,19 +1,23 @@
 function Confirm-FilePath ([string] $String) {
-    $Def = @'
+    if ($String -match 'HarddiskVolume\d+\\') {
+        $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
     string lpDeviceName,
     System.Text.StringBuilder lpTargetPath,
     uint ucchMax);
 '@
-    $StrBld = New-Object System.Text.StringBuilder(65536)
-    $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
-    foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
-        [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
-        $Ntp = [regex]::Escape($StrBld.ToString())
-        $String | Where-Object { $_ -match $Ntp } | ForEach-Object {
-            $_ -replace $Ntp, $Vol.DriveLetter
+        $StrBld = New-Object System.Text.StringBuilder(65536)
+        $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
+        foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
+            [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
+            $Ntp = [regex]::Escape($StrBld.ToString())
+            $String | Where-Object { $_ -match $Ntp } | ForEach-Object {
+                $_ -replace $Ntp, $Vol.DriveLetter
+            }
         }
+    } else {
+        $String
     }
 }
 function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
