@@ -1,22 +1,19 @@
 function Confirm-FilePath ([string] $String) {
-    $String = $String -replace '\\\\','\'
-    if ($String -match '^\\Device') {
-        $Def = @'
+    $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
     string lpDeviceName,
     System.Text.StringBuilder lpTargetPath,
     uint ucchMax);
 '@
-        $StrBld = New-Object System.Text.StringBuilder(65536)
-        $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
-        foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
-            [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
-            $Ntp = [regex]::Escape($StrBld.ToString())
-            $String -replace $Ntp, $Vol.DriveLetter
+    $StrBld = New-Object System.Text.StringBuilder(65536)
+    $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
+    foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
+        [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
+        $Ntp = [regex]::Escape($StrBld.ToString())
+        $String | Where-Object { $_ -match $Ntp } | ForEach-Object {
+            $_ -replace $Ntp, $Vol.DriveLetter
         }
-    } else {
-        $String
     }
 }
 function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
@@ -30,7 +27,7 @@ function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
 $Path = Confirm-FilePath $Param.Path
 if ((Test-Path $Path) -eq $false) {
-    throw "Cannot find path '$($Path)' because it does not exist."
+    throw "Cannot find path '$Path' because it does not exist."
 } elseif ((Test-Path $Path -PathType Leaf) -eq $false) {
     throw "'Path' must be a file."
 }
