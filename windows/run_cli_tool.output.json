@@ -1,0 +1,21 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "Id" : {
+      "type": "integer"
+    },
+    "ProcessName": {
+      "type": "string"
+    },
+    "Output": {
+      "type": "string",
+      "format": "localFilePath"
+    }
+  },
+  "required": [
+    "Id",
+    "ProcessName",
+    "Output"
+  ],
+  "type": "object"
+}
