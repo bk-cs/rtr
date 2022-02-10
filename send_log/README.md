@@ -1,6 +1,6 @@
 ## DESCRIPTION
 Send Json files to Humio and delete them upon successful transmission. Defaults to all Json files located in
-the Rtr directory if 'Path' is not specified.
+the Rtr directory if 'File' is not specified.
 
 ## PARAMETER Cloud
 Base Humio cloud URL (Required)
@@ -8,7 +8,7 @@ Base Humio cloud URL (Required)
 ## PARAMETER Token
 Humio ingestion token (Required)
 
-## PARAMETER Path
+## PARAMETER File
 Path to a specific Json file
 
 ## EXAMPLES
