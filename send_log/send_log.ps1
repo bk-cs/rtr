@@ -139,8 +139,8 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
         throw "'$($Param.$_)' is not a valid ingest token."
     }
 }
-[array] $Array = if ($Param.Path) {
-    $Param.Path | ForEach-Object { Confirm-FilePath $_ }
+[array] $Array = if ($Param.File) {
+    $Param.File | ForEach-Object { Confirm-FilePath $_ }
 } else {
     $Rtr = Join-Path $env:SystemRoot '\system32\drivers\CrowdStrike\Rtr'
     (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName
