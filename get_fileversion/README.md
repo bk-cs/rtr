@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_fileversion" -CommandLine=```'{"Path":"C:\\Windows\\system32\\notepad.exe"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Path = 'C:\Windows\system32\notepad.exe' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='get_fileversion' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

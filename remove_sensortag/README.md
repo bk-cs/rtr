@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="remove_sensortag" -CommandLine=```'{"SensorTag":["my","example","tags"]}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ SensorTag = @('my','example','tags') } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='remove_sensortag' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_local_admin" -CommandLine=```'{"Filter":"Username"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Filter = 'Username' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='local_admin' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

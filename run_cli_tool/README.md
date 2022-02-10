@@ -17,5 +17,8 @@ Delete the file when complete
 runscript -CloudFile="run_cli_tool" -CommandLine=```'{"Path":"C:\\cast.exe","ArgumentList":"scan C:\\"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Path = 'C:\cast.exe'; ArgumentList = 'scan C:\' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='run_cli_tool' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

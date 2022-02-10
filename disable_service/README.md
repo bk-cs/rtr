@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="disable_service" -CommandLine=```'{"Name":"WinRM"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Name = 'WinRM' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='disable_service' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

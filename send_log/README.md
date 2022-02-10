@@ -18,5 +18,8 @@ Path to a specific Json file
 runscript -CloudFile="send_log" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='send_log' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_application" -CommandLine=```'{"Filter":"CrowdStrike"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Filter = 'CrowdStrike' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='get_application' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

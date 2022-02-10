@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_network_port" -CommandLine=```'{"Port":"^80$"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Port = '^80$' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='get_network_port' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

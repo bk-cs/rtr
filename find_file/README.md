@@ -20,5 +20,8 @@ An array of one or more string patterns to exclude
 runscript -CloudFile="find_file" -CommandLine=```'{"Path":"C:\\Windows","Filter":"*.exe"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Path = 'C:\Windows'; Filter = '*.exe' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='find_file' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY

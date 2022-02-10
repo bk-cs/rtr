@@ -14,6 +14,9 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_browser_history" -CommandLine=```'{"Filter":"crowdstrike\\.com"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Filter = 'crowdstrike\.com' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='get_browser_history' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY
 

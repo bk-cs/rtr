@@ -14,5 +14,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_process" -CommandLine=```'{"Filter":"svchost"}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Filter = 'svchost' } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='get_process' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY
