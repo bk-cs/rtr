@@ -139,6 +139,9 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
         throw "'$($Param.$_)' is not a valid ingest token."
     }
 }
+if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+}
 [array] $Array = if ($Param.File) {
     $Param.File | ForEach-Object { Confirm-FilePath $_ }
 } else {
