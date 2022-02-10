@@ -11,5 +11,8 @@ Save results within a Json file in the Rtr directory
 runscript -CloudFile="get_arp" -CommandLine=```'{"Log":true}'```
 ```
 ### PSFALCON
-
+```
+PS>$CommandLine = '```' + "'$(@{ Log = $true } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='get_arp' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```
 ### FALCONPY
