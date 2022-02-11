@@ -16,7 +16,7 @@ public static extern uint QueryDosDevice(
                 $_ -replace $Ntp, $Vol.DriveLetter
             }
         }
-    } else {
+    } elseif (![string]::IsNullOrEmpty($String)) {
         $String
     }
 }
@@ -74,17 +74,7 @@ function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
     }
     $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
 }
-if (!($PSVersionTable.CLRVersion.ToString() -ge 3.5)) { throw '.NET Framework 3.5 or newer is required' }
-if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
-    try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { throw $_ }
-}
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$File = Confirm-FilePath $Param.File
-if ((Test-Path $File) -eq $false) {
-    throw "Cannot find path '$File' because it does not exist."
-} elseif ((Test-Path $File -PathType Leaf) -eq $false) {
-    throw "'File' must be a file."
-}
 @('Hostname','ClientId','ClientSecret').foreach{
     if (!$Param.$_) {
         throw "Missing required parameter '$_'."
@@ -98,6 +88,18 @@ if ((Test-Path $File) -eq $false) {
             throw "'$($Param.$_)' is not a valid '$_' value."
         }
     }
+}
+$File = Confirm-FilePath $Param.File
+if (!$File) {
+    throw "Missing required parameter 'File'."
+} elseif ((Test-Path $File) -eq $false) {
+    throw "Cannot find path '$File' because it does not exist."
+} elseif ((Test-Path $File -PathType Leaf) -eq $false) {
+    throw "'File' must be a file."
+}
+if (!($PSVersionTable.CLRVersion.ToString() -ge 3.5)) { throw '.NET Framework 3.5 or newer is required' }
+if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { throw $_ }
 }
 $Falcon = @{
     ApiClient = "client_id=$($Param.ClientId)&client_secret=$($Param.ClientSecret)"
