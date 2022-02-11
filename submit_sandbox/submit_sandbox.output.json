@@ -8,13 +8,13 @@
       "type": "string"
     },
     "QuotaTotal": {
-      "type": "int"
+      "type": "integer"
     },
     "QuotaUsed": {
-      "type": "int"
+      "type": "integer"
     },
     "QuotaInProgress": {
-      "type": "int"
+      "type": "integer"
     }
   },
   "required": [
