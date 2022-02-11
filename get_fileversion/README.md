@@ -1,7 +1,7 @@
 ## DESCRIPTION
 List FileVersionInfo for Portable Executable (PE) file
 
-## PARAMETER Path
+## PARAMETER File
 Path of the PE file (Required)
 
 ## PARAMETER Log
