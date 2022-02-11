@@ -2,7 +2,7 @@
 Submit a file to the Falcon X Sandbox. Requires an API Client with 'samples:write' and 'falconx-sandbox:write'.
 
 ## PARAMETER File
-Path to the file
+Path to the file (Required)
 
 ## PARAMETER Hostname
 CrowdStrike Falcon API hostname (Required)
