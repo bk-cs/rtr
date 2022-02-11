@@ -1,0 +1,32 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "File": {
+      "type": "string",
+      "format": "localFilePath"
+    },
+    "Hostname": {
+      "type": "string",
+      "format": "url"
+    },
+    "ClientId": {
+      "type": "string"
+    },
+    "ClientSecret": {
+      "type": "string"
+    },
+    "MemberCid": {
+      "type": "string"
+    },
+    "Log": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "File",
+    "Hostname",
+    "ClientId",
+    "ClientSecret"
+  ],
+  "type": "object"
+}

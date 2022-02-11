@@ -1,0 +1,28 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "SubmissionId": {
+      "type": "string"
+    },
+    "SubmissionName": {
+      "type": "string"
+    },
+    "QuotaTotal": {
+      "type": "int"
+    },
+    "QuotaUsed": {
+      "type": "int"
+    },
+    "QuotaInProgress": {
+      "type": "int"
+    },
+  },
+  "required": [
+    "SubmissionId",
+    "SubmissionName",
+    "QuotaTotal",
+    "QuotaUsed",
+    "QuotaInProgress"
+  ],
+  "type": "object"
+}
