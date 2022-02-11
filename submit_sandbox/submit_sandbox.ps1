@@ -118,25 +118,25 @@ $EnvId = if ((Get-WmiObject -Class Win32_OperatingSystem).Caption -match 'Window
     100
 }
 $Comment = "$($env:COMPUTERNAME)_$((Get-Date).ToFileTimeUtc())"
-$Response = Invoke-Falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File |
+$Sample = Invoke-Falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File |
     Split-Path -Leaf)&comment=$Comment"; Method = 'POST'; Headers = @{ Accept = 'application/json';
     'Content-Type' = 'application/octet-stream' }; File = $File }
-$Sha256 = [regex]::Matches($Response,'"sha256": "(?<sha256>\w{64})",?')[0].Groups['sha256'].Value
-if (!$Sha256) {
+$Sha256 = [regex]::Matches($Sample,'"sha256": "(?<sha256>\w{64})",?')[0].Groups['sha256'].Value
+if (!$Sample -or !$Sha256) {
     throw 'Failed sample upload.'
 }
-$Response = Invoke-Falcon @{ Uri = '/falconx/entities/submissions/v1'; Method = 'POST'; Headers = @{ Accept =
+$Submit = Invoke-Falcon @{ Uri = '/falconx/entities/submissions/v1'; Method = 'POST'; Headers = @{ Accept =
     'application/json'; 'Content-Type' = 'application/json' }; Body = '{"sandbox":[{"environment_id":' + $EnvId +
     ',"sha256":"' + $Sha256 + '","submit_name":"' + $Comment + '"}]}' }
-if (!$Response) {
+if (!$Submit) {
     throw 'Failed submission to Falcon X Sandbox.'
 }
 $Output = @{
-    SubmissionId    = [regex]::Matches($Response,'"id": "(?<id>\w{32}_\w{32})",?')[0].Groups['id'].Value
+    SubmissionId    = [regex]::Matches($Submit,'"id": "(?<id>\w{32}_\w{32})",?')[0].Groups['id'].Value
     SubmissionName  = $Comment
-    QuotaTotal      = [regex]::Matches($Response,'"total": (?<total>\d+),?')[0].Groups['total'].Value
-    QuotaUsed       = [regex]::Matches($Response,'"used": (?<used>\d+),?')[0].Groups['used'].Value
-    QuotaInProgress = [regex]::Matches($Response,'"in_progress": (?<in_progress>\d+),?')[0].Groups[
+    QuotaTotal      = [regex]::Matches($Submit,'"total": (?<total>\d+),?')[0].Groups['total'].Value
+    QuotaUsed       = [regex]::Matches($Submit,'"used": (?<used>\d+),?')[0].Groups['used'].Value
+    QuotaInProgress = [regex]::Matches($Submit,'"in_progress": (?<in_progress>\d+),?')[0].Groups[
         'in_progress'].Value
 }
 Write-Output $Output $Param "submit_sandbox_$((Get-Date).ToFileTimeUtc()).json"
