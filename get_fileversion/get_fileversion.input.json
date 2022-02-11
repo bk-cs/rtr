@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
-    "Path" : {
+    "File" : {
       "type": "string",
       "format": "localFilePath"
     },
@@ -10,7 +10,7 @@
     }
   },
   "required": [
-    "Path"
+    "File"
   ],
   "type": "object"
 }

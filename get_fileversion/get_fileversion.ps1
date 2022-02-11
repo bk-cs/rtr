@@ -31,15 +31,15 @@ function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
     $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Path = Confirm-FilePath $Param.Path
-if (!$Path) {
-    throw "Missing required parameter 'Path'."
-} elseif ((Test-Path $Path) -eq $false) {
-    throw "Cannot find path '$Path' because it does not exist."
-} elseif ((Test-Path $Path -PathType Leaf) -eq $false) {
-    throw "'Path' must be a file."
+$File = Confirm-FilePath $Param.File
+if (!$File) {
+    throw "Missing required parameter 'File'."
+} elseif ((Test-Path $File) -eq $false) {
+    throw "Cannot find path '$File' because it does not exist."
+} elseif ((Test-Path $File -PathType Leaf) -eq $false) {
+    throw "'File' must be a file."
 }
-$Output = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($Path) | Select-Object OriginalFilename,
+$Output = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($File) | Select-Object OriginalFilename,
 FileDescription, ProductName, CompanyName, FileName, FileVersion | ForEach-Object {
     $_.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',(Get-FileHash $_.FileName).Hash.ToLower())))
     $_
