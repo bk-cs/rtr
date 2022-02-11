@@ -26,7 +26,7 @@ function Invoke-Falcon ([object] $Object) {
     if (!$Object.Method) { $Object['Method'] = 'GET' }
     if (!$Object.Headers) { $Object['Headers'] = @{ Accept = 'application/json' }}
     if ((!$Falcon.Expiration -or $Falcon.Expiration -le (Get-Date).AddSeconds(600)) -and
-    $ObjectObj.Uri -ne '/oauth2/token') {
+    $Object.Uri -ne '/oauth2/token') {
         Invoke-Falcon @{ Uri = '/oauth2/token'; Method = 'POST'; Headers = @{ Accept = 'application/json';
         'Content-Type' = 'application/x-www-form-urlencoded' }; Body = $Falcon.ApiClient } | ForEach-Object {
             if ($_ -match 'expires_in') {
@@ -46,9 +46,9 @@ function Invoke-Falcon ([object] $Object) {
         if ((Test-Path $Object.File -PathType Leaf) -eq $false) {
             throw "'$($Object.File)' can not be found or is not a file."
         }
-        $Bytes = Get-Content -Path $Object.File -Encoding Byte -Raw
-        [System.Text.Encoding]::UTF8.GetString($Falcon.WebClient.UploadData($Object.Uri, $Bytes))
-    } elseif ($Param.Method -eq 'POST' -and $Object.Body) {
+        $ByteContent = Get-Content -Path $Object.File -Encoding Byte -Raw
+        [System.Text.Encoding]::UTF8.GetString($Falcon.WebClient.UploadData($Object.Uri, $ByteContent))
+    } elseif ($Object.Method -eq 'POST' -and $Object.Body) {
         $Falcon.WebClient.UploadString($Object.Uri, $Object.Body)
     } else {
         $Request = $Falcon.WebClient.OpenRead($Object.Uri)
@@ -120,17 +120,19 @@ $EnvId = if ((Get-WmiObject -Class Win32_OperatingSystem).Caption -match 'Window
     100
 }
 $Comment = "$($env:COMPUTERNAME)_$((Get-Date).ToFileTimeUtc())"
-$Sample = Invoke-Falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File |
-    Split-Path -Leaf)&comment=$Comment"; Method = 'POST'; Headers = @{ Accept = 'application/json';
-    'Content-Type' = 'application/octet-stream' }; File = $File }
-$Sha256 = [regex]::Matches($Sample,'"sha256": "(?<sha256>\w{64})",?')[0].Groups['sha256'].Value
-if (!$Sample -or !$Sha256) {
+$Sample = try {
+    Invoke-Falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File | Split-Path -Leaf)&comment=$Comment";
+        Method = 'POST'; Headers = @{ Accept = 'application/json'; 'Content-Type' = 'application/octet-stream' };
+        File = $File }
+} catch {
     throw 'Failed sample upload.'
 }
-$Submit = Invoke-Falcon @{ Uri = '/falconx/entities/submissions/v1'; Method = 'POST'; Headers = @{ Accept =
-    'application/json'; 'Content-Type' = 'application/json' }; Body = '{"sandbox":[{"environment_id":' + $EnvId +
-    ',"sha256":"' + $Sha256 + '","submit_name":"' + $Comment + '"}]}' }
-if (!$Submit) {
+$Sha256 = [regex]::Matches($Sample,'"sha256": "(?<sha256>\w{64})",?')[0].Groups['sha256'].Value
+$Submit = try {
+    Invoke-Falcon @{ Uri = '/falconx/entities/submissions/v1'; Method = 'POST'; Headers = @{ Accept =
+        'application/json'; 'Content-Type' = 'application/json' }; Body = '{"sandbox":[{"environment_id":' +
+        $EnvId + ',"sha256":"' + $Sha256 + '","submit_name":"' + $Comment + '"}]}' }
+} catch {
     throw 'Failed submission to Falcon X Sandbox.'
 }
 $Output = @{
