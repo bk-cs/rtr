@@ -91,8 +91,6 @@ if ((Test-Path $File) -eq $false) {
     } elseif ($_ -eq 'Hostname') {
         if ($Param.$_ -notmatch 'https://api(.(eu-1|laggar.gcw|us-2))?.crowdstrike.com') {
             throw "'$($Param.$_)' is not a valid API hostname value."
-        } elseif ($Param.$_ -notmatch '/$') {
-            $Param.$_ += '/'
         }
     } elseif ($_ -match '^Client') {
         if (($_ -match 'Id$' -and $Param.$_ -notmatch '^\w{32}$') -or ($_ -match 'Secret$' -and
