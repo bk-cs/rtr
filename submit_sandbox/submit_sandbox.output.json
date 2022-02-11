@@ -15,7 +15,7 @@
     },
     "QuotaInProgress": {
       "type": "int"
-    },
+    }
   },
   "required": [
     "SubmissionId",
