@@ -1,7 +1,7 @@
 ## DESCRIPTION
 Run a CLI-based tool and capture the output to Json
 
-## PARAMETER Path
+## PARAMETER File
 Path to the file
 
 ## PARAMETER ArgumentList
