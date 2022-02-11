@@ -20,11 +20,11 @@ public static extern uint QueryDosDevice(
         $String
     }
 }
-function Invoke-Falcon ([object] $Param) {
-    if (!$Param.Method) { $Param['Method'] = 'GET' }
-    if (!$Param.Headers) { $Param['Headers'] = @{ Accept = 'application/json' }}
+function Invoke-Falcon ([object] $Object) {
+    if (!$Object.Method) { $Object['Method'] = 'GET' }
+    if (!$Object.Headers) { $Object['Headers'] = @{ Accept = 'application/json' }}
     if ((!$Falcon.Expiration -or $Falcon.Expiration -le (Get-Date).AddSeconds(600)) -and
-    $Param.Uri -ne '/oauth2/token') {
+    $ObjectObj.Uri -ne '/oauth2/token') {
         Invoke-Falcon @{ Uri = '/oauth2/token'; Method = 'POST'; Headers = @{ Accept = 'application/json';
         'Content-Type' = 'application/x-www-form-urlencoded' }; Body = $Falcon.ApiClient } | ForEach-Object {
             if ($_ -match 'expires_in') {
@@ -37,25 +37,25 @@ function Invoke-Falcon ([object] $Param) {
             } else { throw 'Failed to retrieve authorization token.' }
         }
     }
-    ($Param.Headers).GetEnumerator().foreach{ $Falcon.WebClient.Headers.Add($_.Key, $_.Value) }
-    if ($Param.Method -eq 'GET' -and $Param.Outfile) {
-        $Falcon.WebClient.DownloadFile($Param.Uri, $Param.Outfile)
-    } elseif ($Param.Method -eq 'POST' -and $Param.File) {
-        if ((Test-Path $Param.File -PathType Leaf) -eq $false) {
-            throw "'$($Param.File)' can not be found or is not a file."
+    ($Object.Headers).GetEnumerator().foreach{ $Falcon.WebClient.Headers.Add($_.Key, $_.Value) }
+    if ($Object.Method -eq 'GET' -and $Object.Outfile) {
+        $Falcon.WebClient.DownloadFile($Object.Uri, $Object.Outfile)
+    } elseif ($Object.Method -eq 'POST' -and $Object.File) {
+        if ((Test-Path $Object.File -PathType Leaf) -eq $false) {
+            throw "'$($Object.File)' can not be found or is not a file."
         }
-        $ByteContent = Get-Content -Path $Param.File -Encoding Byte -Raw
-        [System.Text.Encoding]::UTF8.GetString($Falcon.WebClient.UploadData($Param.Uri, $ByteContent))
-    } elseif ($Param.Method -eq 'POST' -and $Param.Body) {
-        $Falcon.WebClient.UploadString($Param.Uri, $Param.Body)
+        $Bytes = Get-Content -Path $Object.File -Encoding Byte -Raw
+        [System.Text.Encoding]::UTF8.GetString($Falcon.WebClient.UploadData($Object.Uri, $Bytes))
+    } elseif ($Param.Method -eq 'POST' -and $Object.Body) {
+        $Falcon.WebClient.UploadString($Object.Uri, $Object.Body)
     } else {
-        $Request = $Falcon.WebClient.OpenRead($Param.Uri)
+        $Request = $Falcon.WebClient.OpenRead($Object.Uri)
         $Stream = New-Object System.IO.StreamReader $Request
         $Stream.ReadToEnd()
         @($Request, $Stream).Where({ $_ }).foreach{ $_.Dispose() }
     }
-    if ($Param.Headers) {
-        ($Param.Headers.Keys).Where({ $Falcon.WebClient.Headers.Get($_) }).foreach{
+    if ($Object.Headers) {
+        ($Object.Headers.Keys).Where({ $Falcon.WebClient.Headers.Get($_) }).foreach{
             $Falcon.WebClient.Headers.Remove($_)
         }
     }
@@ -63,7 +63,7 @@ function Invoke-Falcon ([object] $Param) {
         $RetryAfter = ([System.DateTimeOffset]::FromUnixTimeSeconds($Falcon.WebClient.ResponseHeaders.Get(
             'X-Ratelimit-RetryAfter'))).Second
         Start-Sleep -Seconds $RetryAfter
-        Invoke-Falcon $Param
+        Invoke-Falcon $Object
     }
 }
 function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
