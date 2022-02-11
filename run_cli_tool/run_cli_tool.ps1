@@ -23,19 +23,19 @@ public static extern uint QueryDosDevice(
     }
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Path = Confirm-FilePath $Param.Path
-if (!$Path) {
-    throw "Missing required parameter 'Path'."
-} elseif ((Test-Path $Path) -eq $false) {
-    throw "Cannot find path '$Path' because it does not exist."
-} elseif ((Test-Path $Path -PathType Leaf) -eq $false) {
-    throw "'Path' must be a file."
+$File = Confirm-FilePath $Param.File
+if (!$File) {
+    throw "Missing required parameter 'File'."
+} elseif ((Test-Path $File) -eq $false) {
+    throw "Cannot find path '$File' because it does not exist."
+} elseif ((Test-Path $File -PathType Leaf) -eq $false) {
+    throw "'File' must be a file."
 }
 $Json = "run_cli_tool_$((Get-Date).ToFileTimeUtc()).json"
 $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
 if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
 $Start = @{
-    FilePath               = $Path
+    FilePath               = $File
     RedirectStandardOutput = "$Rtr\$Json"
     PassThru               = $true
 }
@@ -47,7 +47,7 @@ Start-Process @Start | ForEach-Object {
     if ($Param.Delete -eq $true) {
         $Wait = @{
             FilePath     = 'powershell.exe'
-            ArgumentList = "-Command &{ Wait-Process -Id $($_.Id); Remove-Item -Path $Path }"
+            ArgumentList = "-Command &{ Wait-Process -Id $($_.Id); Remove-Item -Path $File }"
             PassThru     = $true
         }
         [void] (Start-Process @Wait)
