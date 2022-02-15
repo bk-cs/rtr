@@ -87,8 +87,8 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
             $Reg = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e' +
                 '0423f-7058-48c9-a204-725362b67639}\Default') 2>$null
             if ($Reg) {
-                $Body.tags['cid'] = (($Reg -match 'CU') -split 'REG_BINARY')[-1].Trim().ToLower()
-                $Body.tags['aid'] = (($Reg -match 'AG') -split 'REG_BINARY')[-1].Trim().ToLower()
+                $Body.tags['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+                $Body.tags['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
             } else {
                 $Body.tags['host'] = [System.Net.Dns]::GetHostName()
             }
