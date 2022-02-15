@@ -154,11 +154,14 @@ if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
     $Rtr = Join-Path $env:SystemRoot '\system32\drivers\CrowdStrike\Rtr'
     (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName
 }
-$Array | ForEach-Object {
+if (-not $Array) {
+    throw 'No Json files found for ingestion.'
+}
+$Array | Where-Object { -not [string]::IsNullOrEmpty($_) } | ForEach-Object {
     if ((Test-Path $_) -eq $false) {
         throw "Cannot find path '$_' because it does not exist."
     } elseif ((Test-Path $_ -PathType Leaf) -eq $false -or ($_ -notmatch '\.json$')) {
-        throw "'$_' is not a json file."
+        throw "'$_' is not a Json file."
     }
 }
 Send-ToHumio $Param.Cloud $Param.Token $Array
