@@ -47,7 +47,7 @@ Start-Process @Start | ForEach-Object {
     if ($Param.Delete -eq $true) {
         $Wait = @{
             FilePath     = 'powershell.exe'
-            ArgumentList = "-Command &{ Wait-Process -Id $($_.Id); Remove-Item -Path $File }"
+            ArgumentList = "-Command &{ Wait-Process $($_.Id); Start-Sleep 10; Remove-Item $File -Force }"
             PassThru     = $true
         }
         [void] (Start-Process @Wait)
