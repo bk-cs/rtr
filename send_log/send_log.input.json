@@ -9,8 +9,7 @@
     },
     "File" : {
       "type": "string",
-      "format": "localFilePath",
-      "ui:component": "select"
+      "format": "localFilePath"
     }
   },
   "required": [
