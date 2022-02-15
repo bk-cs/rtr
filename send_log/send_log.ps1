@@ -61,8 +61,12 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
             $Clone = ConvertTo-Json @($Clone) -Depth 8 -Compress
             $Output = try {
                 $Request = Invoke-WebRequest @Invoke -Body $Clone -UseBasicParsing
-                if ($Request.StatusCode -eq 200) { Remove-Item $_ }
-                [PSCustomObject] @{ Json = $_; Sent = 'true'; Deleted = 'true' }
+                if ($Request.StatusCode -eq 200) {
+                    Remove-Item $_
+                    [PSCustomObject] @{ Json = $_; Sent = 'true'; Deleted = 'true' }
+                } else {
+                    [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false' }
+                }
             } catch {
                 [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false' }
             }
