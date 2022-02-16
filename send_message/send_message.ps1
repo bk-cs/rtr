@@ -1,5 +1,5 @@
 function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
-    if ($Object -and $Param.Log -eq $true) {
+    if ($Object -and $Param.elog -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
         if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
         $Object | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
@@ -38,16 +38,28 @@ return response;
 if (!([System.Management.Automation.PSTypeName]'WTSMessage').Type) {
     Add-Type -TypeDefinition $Def
 }
+$Message = $(if ($Param.cuser) { $Param.cuser + "`n`n" }) + $Param.bmessage + $(if ($Param.dcontact) { "`n`nPlease reach out to " + $Param.dcontact  })
+
+$UserLogged = $false
+$UserLogged = Get-Process -IncludeUserName | Where-Object { $_.SessionId -ne 0 } | Select-Object SessionId, UserName |
+Sort-Object -Unique | ForEach-Object { if ($_.UserName -match $Param.cuser) { $true } }
+
+$Output = [PSCustomObject] @{
+            Delivered = $false
+        }
+
 $Output = Get-Process -IncludeUserName | Where-Object { $_.SessionId -ne 0 } | Select-Object SessionId, UserName |
 Sort-Object -Unique | ForEach-Object {
-    $Result = if ($_.SessionId) {
-        [WTSMessage]::SendMessage($_.SessionId,'CrowdStrike Falcon',$Param.Message,15,0x00000040L)
-    } else {
-        "no_active_session"
-    }
-    [PSCustomObject] @{
-        Username = $_.UserName
-        Message  = if ($Result -eq 1) { $Param.Message } else { $Result }
+    if ( $UserLogged ) {
+        $Result = if ($_.SessionId -and ($_.UserName -match $Param.cuser) ) {
+            [WTSMessage]::SendMessage($_.SessionId,$Param.atitle,$Message,15,0x00000040L)
+        }
+        [PSCustomObject] @{
+            Delivered = $true
+            Username = $_.UserName
+            Message  = if ($Result -eq 1) { $Param.bmessage } else { $Result }
+        }
     }
 }
-Write-Output $Output $Param "send_message_$((Get-Date).ToFileTimeUtc()).json"
+
+Write-Output $Output $Param "send_message_$((Get-Date).ToFileTimeUtc()).json" 
