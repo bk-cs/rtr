@@ -11,11 +11,11 @@ Save results within a Json file in the Rtr directory
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="send_message" -CommandLine=```'{"Message":"This is an example"}'```
+runscript -CloudFile="send_message" -CommandLine=```'{"bmessage":"This is an example", "atitle":"Example window"}'```
 ```
 ### PSFALCON
 ```
-PS>$CommandLine = '```' + "'$(@{ Message = 'This is an example' } | ConvertTo-Json -Compress)'" + '```'
+PS>$CommandLine = '```' + "'$(@{ bmessage = 'This is an example' ; atitle = 'Example window'} | ConvertTo-Json -Compress)'" + '```'
 PS>Invoke-FalconRtr runscript "-CloudFile='send_message' -CommandLine=$CommandLine" -HostIds <id>, <id>
 ```
 ### FALCONPY
