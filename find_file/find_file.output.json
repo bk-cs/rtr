@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties":{
     "Id": {
-        "type": "integer"
+      "type": "integer"
     },
     "ProcessName": {
-        "type": "string"
+      "type": "string"
     },
     "Log": {
-        "type": "string"
+      "type": "string"
     }
   },
   "required":[
