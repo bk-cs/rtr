@@ -1,6 +1,9 @@
-﻿{
+{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
+  	"Delivered": {
+      "type": "boolean"
+    },
     "Username": {
       "type": "string"
     },
@@ -9,8 +12,7 @@
     }
   },
   "required": [
-    "Username",
-    "Message"
+    "Delivered"
   ],
   "type": "object"
 }
