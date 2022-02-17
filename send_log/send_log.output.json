@@ -8,14 +8,18 @@
     "Sent": {
       "type": "boolean"
     },
-    "Deleted" : {
+    "Deleted": {
       "type": "boolean"
+    },
+    "Status": {
+      "type": "string"
     }
   },
   "required": [
     "Json",
     "Sent",
-    "Deleted"
+    "Deleted",
+    "Status"
   ],
   "type": "object"
 }

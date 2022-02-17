@@ -7,7 +7,7 @@
     "Token" : {
       "type": "string"
     },
-    "File" : {
+    "Json" : {
       "type": "string",
       "format": "localFilePath"
     }

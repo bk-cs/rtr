@@ -48,6 +48,7 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
         }
     }
     $Array | Where-Object { $Locked -notcontains $_ } | ForEach-Object {
+        $Output = [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false'; Status = $null }
         try {
             $Json = Get-Content $_ | ConvertFrom-Json
             $Clone = $Body.Clone()
@@ -59,21 +60,31 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
             }
             $Clone['events'] = @($Events)
             $Clone = ConvertTo-Json @($Clone) -Depth 8 -Compress
-            $Output = try {
-                $Request = Invoke-WebRequest @Invoke -Body $Clone -UseBasicParsing
-                if ($Request.StatusCode -eq 200) {
-                    Remove-Item $_
-                    [PSCustomObject] @{ Json = $_; Sent = 'true'; Deleted = 'true' }
-                } else {
-                    [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false' }
-                }
-            } catch {
-                [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false' }
-            }
-            $Output | ConvertTo-Json -Compress
         } catch {
-            Write-Error "Unable to parse '$_'."
+            $Output.Status = 'failure_before_request'
         }
+        try {
+            $Request = Invoke-WebRequest @Invoke -Body $Clone -UseBasicParsing
+            if ($Request.StatusCode) {
+                $Output.Status = $Request.StatusCode.ToString()
+            }
+            if ($Request.StatusCode -eq 200) {
+                $Output.Sent = $true
+                Remove-Item $_
+                if ((Test-Path $_) -eq $false) {
+                    $Output.Deleted = $true
+                } else {
+                    $Output.Status = 'failed_to_delete'
+                }
+            }
+        } catch {
+            $Output.Status = if ($Request.StatusCode) {
+                $Request.StatusCode.ToString()
+            } else {
+                'failure_during_request'
+            }
+        }
+        $Output | ConvertTo-Json -Compress
     }
     if ($Locked) {
         [scriptblock] $Script = {
@@ -103,7 +114,8 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
                     } catch {
                         $false
                     }
-                } until ( $Unlocked -eq $true )
+                    $i += 30
+                } until ( $Unlocked -eq $true -or $i -eq 600 )
                 $Json = Get-Content $_ | ConvertFrom-Json
                 $Clone = $Body.Clone()
                 $Events = $Json | ForEach-Object {
@@ -126,7 +138,8 @@ function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
         }
         Start-Process @Start | ForEach-Object {
             $Locked | ForEach-Object {
-                [PSCustomObject] @{ Json = $_; Send = 'pending'; Deleted = 'pending' } | ConvertTo-Json -Compress
+                [PSCustomObject] @{ Json = $_; Sent = $false; Deleted = $false;
+                    Status = 'waiting_for_file_access' } | ConvertTo-Json -Compress
             }
         }
     }
@@ -148,14 +161,14 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
 if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 }
-[array] $Array = if ($Param.File) {
-    $Param.File | ForEach-Object { Confirm-FilePath $_ }
+[array] $Array = if ($Param.Json) {
+    $Param.Json | ForEach-Object { Confirm-FilePath $_ }
 } else {
     $Rtr = Join-Path $env:SystemRoot '\system32\drivers\CrowdStrike\Rtr'
     (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName
 }
 if (-not $Array) {
-    throw 'No Json files found for ingestion.'
+    throw 'No Json files found.'
 }
 $Array | Where-Object { -not [string]::IsNullOrEmpty($_) } | ForEach-Object {
     if ((Test-Path $_) -eq $false) {
