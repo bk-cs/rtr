@@ -1,3 +1,11 @@
+function Get-UniqueHash ([object] $Obj, [string] $Str) {
+    foreach ($I in $Obj) {
+        $E = ($Obj | Where-Object { $_.$Str -eq $I.$Str } | Select-Object -Unique).Sha256
+        $H = if ($E) { $E } else { try { (Get-FileHash $I.$Str -EA 0).Hash.ToLower() } catch { $null }}
+        $I.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',$H)))
+    }
+    $Obj
+}
 function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
     if ($Object -and $Param.Log -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
@@ -14,9 +22,5 @@ ForEach-Object {
     }
     if ($Param.Filter) { $_ | Where-Object { $_.Name -match $Param.Filter }} else { $_ }
 }
-foreach ($Item in $Output) {
-    $Copy = ($Output | Where-Object { $_.Path -eq $Item.Path } | Select-Object -Unique).Sha256
-    $Hash = if ($Copy) { $Copy } else { try { (Get-FileHash $Item.Path).Hash.ToLower() } catch { $null }}
-    $Item.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',$Hash)))
-}
+$Output = Get-UniqueHash $Output Path
 Write-Output $Output $Param "get_process_$((Get-Date).ToFileTimeUtc()).json"
