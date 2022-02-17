@@ -9,7 +9,8 @@
     },
     "Json" : {
       "type": "string",
-      "format": "localFilePath"
+      "format": "localFilePath",
+      "ui:component": "select"
     }
   },
   "required": [
