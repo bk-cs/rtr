@@ -43,6 +43,6 @@ $Start = @{
 }
 if ($UserDir) { $Start.ArgumentList += " '$UserDir'" }
 Start-Process @Start | Select-Object Id, ProcessName | ForEach-Object {
-    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Json',$Rtr)))
+    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Json',$Start.RedirectStandardOutput)))
     $_ | ConvertTo-Json -Compress
 }
