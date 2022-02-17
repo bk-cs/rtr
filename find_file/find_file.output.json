@@ -7,14 +7,14 @@
     "ProcessName": {
       "type": "string"
     },
-    "Log": {
+    "Json": {
       "type": "string"
     }
   },
   "required":[
     "Id",
     "ProcessName",
-    "Log"
+    "Json"
   ],
   "type":"object"
 }
