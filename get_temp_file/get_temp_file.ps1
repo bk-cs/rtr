@@ -38,12 +38,11 @@ if ($Param.Username) {
 $Start = @{
     FilePath               = 'powershell.exe'
     ArgumentList           = "-Command &{$Script}"
-    RedirectStandardError  = "$Rtr\get_temp_file_$((Get-Date).ToFileTimeUtc()).log"
     RedirectStandardOutput = "$Rtr\get_temp_file_$((Get-Date).ToFileTimeUtc()).json"
     PassThru               = $true
 }
 if ($UserDir) { $Start.ArgumentList += " '$UserDir'" }
 Start-Process @Start | Select-Object Id, ProcessName | ForEach-Object {
-    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Log',$Rtr)))
+    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Json',$Rtr)))
     $_ | ConvertTo-Json -Compress
 }
