@@ -1,26 +1,48 @@
-function Get-UniqueHash ([object] $Obj, [string] $Str) {
+function hash ([object] $Obj, [string] $Str) {
     foreach ($I in $Obj) {
-        $E = ($Obj | Where-Object { $_.$Str -eq $I.$Str } | Select-Object -Unique).Sha256
+        $E = ($Obj | ? { $_.$Str -eq $I.$Str } | select -Unique).Sha256
         $H = if ($E) { $E } else { try { (Get-FileHash $I.$Str -EA 0).Hash.ToLower() } catch { $null }}
         $I.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',$H)))
     }
     $Obj
 }
-function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
-    if ($Object -and $Param.Log -eq $true) {
+function output ([object] $Obj, [object] $Param, [string] $Json) {
+    if ($Obj -and $Param.Log -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-        $Object | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        $O = @{ tags = @{ json = $Json; script = $Json -replace '_\d+\.json$','.ps1';
+            host = [System.Net.Dns]::GetHostName() }}
+        $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
+            '7058-48c9-a204-725362b67639}\Default') 2>$null
+        if ($R) {
+            $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+        }
+        $Evt = $Obj | % {
+            $Att = @{}
+            $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Att }
+        }
+        if (($Evt | measure).Count -eq 1) {
+            $O['events'] = @($Evt)
+            $O | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+        } elseif (($Evt | measure).Count -gt 1) {
+            for ($i = 0; $i -lt ($Evt | measure).Count; $i += 200) {
+                $C = $O.Clone()
+                $C['events'] = $Evt[$i..($i + 199)]
+                $C | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+            }
+        }
     }
-    $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
+    $Obj | ConvertTo-Json -Compress
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Output = Get-Process -EA 0 | Select-Object Id, Name, StartTime, WorkingSet, CPU, HandleCount, Path |
-ForEach-Object {
-    $_.PSObject.Properties | ForEach-Object {
+$Out = Get-Process -EA 0 | select Id, Name, StartTime, WorkingSet, CPU, HandleCount, Path |
+% {
+    $_.PSObject.Properties | % {
         if ($_.Value -is [datetime]) { $_.Value = try { $_.Value.ToFileTimeUtc() } catch { $_.Value }}
     }
-    if ($Param.Filter) { $_ | Where-Object { $_.Name -match $Param.Filter }} else { $_ }
+    if ($Param.Filter) { $_ | ? { $_.Name -match $Param.Filter }} else { $_ }
 }
-$Output = Get-UniqueHash $Output Path
-Write-Output $Output $Param "get_process_$((Get-Date).ToFileTimeUtc()).json"
+$Out = hash $Out Path
+output $Out $Param "get_process_$((Get-Date).ToFileTimeUtc()).json"

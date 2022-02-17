@@ -1,21 +1,43 @@
-function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
-    if ($Object -and $Param.Log -eq $true) {
+function output ([object] $Obj, [object] $Param, [string] $Json) {
+    if ($Obj -and $Param.Log -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-        $Object | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        $O = @{ tags = @{ json = $Json; script = $Json -replace '_\d+\.json$','.ps1';
+            host = [System.Net.Dns]::GetHostName() }}
+        $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
+            '7058-48c9-a204-725362b67639}\Default') 2>$null
+        if ($R) {
+            $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+        }
+        $Evt = $Obj | % {
+            $Att = @{}
+            $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Att }
+        }
+        if (($Evt | measure).Count -eq 1) {
+            $O['events'] = @($Evt)
+            $O | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+        } elseif (($Evt | measure).Count -gt 1) {
+            for ($i = 0; $i -lt ($Evt | measure).Count; $i += 200) {
+                $C = $O.Clone()
+                $C['events'] = $Evt[$i..($i + 199)]
+                $C | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+            }
+        }
     }
-    $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
+    $Obj | ConvertTo-Json -Compress
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Output = Get-NetAdapter -EA 0 | ForEach-Object {
-    $Ip = Get-NetIpAddress -InterfaceIndex $_.IfIndex | Select-Object IPAddress, AddressFamily
-    $_ | Select-Object Name, MacAddress, LinkSpeed, Virtual, Status, MediaConnectionState, FullDuplex, DriverName,
-    DriverVersionString | ForEach-Object {
-        $_.PSObject.Properties.Add((New-Object PSNoteProperty('Ipv4Address',($Ip | Where-Object {
+$Out = Get-NetAdapter -EA 0 | % {
+    $Ip = Get-NetIpAddress -InterfaceIndex $_.IfIndex | select IPAddress, AddressFamily
+    $_ | select Name, MacAddress, LinkSpeed, Virtual, Status, MediaConnectionState, FullDuplex, DriverName,
+    DriverVersionString | % {
+        $_.PSObject.Properties.Add((New-Object PSNoteProperty('Ipv4Address',($Ip | ? {
             $_.AddressFamily -eq 'IPv4' }).IPAddress)))
-        $_.PSObject.Properties.Add((New-Object PSNoteProperty('Ipv6Address',($Ip | Where-Object {
+        $_.PSObject.Properties.Add((New-Object PSNoteProperty('Ipv6Address',($Ip | ? {
             $_.AddressFamily -eq 'IPv6'}).IPAddress)))
         $_
     }
 }
-Write-Output $Output $Param "get_network_adapter_$((Get-Date).ToFileTimeUtc()).json"
+output $Out $Param "get_network_adapter_$((Get-Date).ToFileTimeUtc()).json"

@@ -1,25 +1,43 @@
-function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
-    if ($Object -and $Param.Log -eq $true) {
+function output ([object] $Obj, [object] $Param, [string] $Json) {
+    if ($Obj -and $Param.Log -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-        $Object | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
-    }
-    $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
-}
-$Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Output = Get-NetFirewallRule -EA 0 | Select-Object Name, DisplayName, DisplayGroup, Enabled, Profile, Direction,
-Action, EdgeTraversalPolicy, LooseSourceMapping, LocalOnlyMapping, Owner, PrimaryStatus, EnforcementStatus,
-PolicyStoreSource, PolicyStoreSourceType | ForEach-Object {
-    $_.PSObject.Properties | ForEach-Object {
-        if ($_.Value -and $_.Value.ToString() -and $_.Value -isnot [array]) {
-            $_.Value = $_.Value.ToString()
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        $O = @{ tags = @{ json = $Json; script = $Json -replace '_\d+\.json$','.ps1';
+            host = [System.Net.Dns]::GetHostName() }}
+        $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
+            '7058-48c9-a204-725362b67639}\Default') 2>$null
+        if ($R) {
+            $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+        }
+        $Evt = $Obj | % {
+            $Att = @{}
+            $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Att }
+        }
+        if (($Evt | measure).Count -eq 1) {
+            $O['events'] = @($Evt)
+            $O | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+        } elseif (($Evt | measure).Count -gt 1) {
+            for ($i = 0; $i -lt ($Evt | measure).Count; $i += 200) {
+                $C = $O.Clone()
+                $C['events'] = $Evt[$i..($i + 199)]
+                $C | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+            }
         }
     }
-    if ($Param.Filter) {
-        $_ | Where-Object { $_.Name -match $Param.Filter -or $_.DisplayName -match $Param.Filter -or
-            $_.DisplayGroup -match $Param.Filter }
-    } else {
-        $_
-    }
+    $Obj | ConvertTo-Json -Compress
 }
-Write-Output $Output $Param "get_firewall_rule_$((Get-Date).ToFileTimeUtc()).json"
+$Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
+$Out = Get-NetFirewallRule -EA 0 | select Name, DisplayName, DisplayGroup, Enabled, Profile, Direction,
+Action, EdgeTraversalPolicy, LooseSourceMapping, LocalOnlyMapping, Owner, PrimaryStatus, EnforcementStatus,
+PolicyStoreSource, PolicyStoreSourceType | % {
+    $_.PSObject.Properties | % {
+        if ($_.Value -and $_.Value.ToString() -and $_.Value -isnot [array]) { $_.Value = $_.Value.ToString() }
+    }
+    if ($Param.Filter) {
+        $_ | ? { $_.Name -match $Param.Filter -or $_.DisplayName -match $Param.Filter -or $_.DisplayGroup -match
+            $Param.Filter }
+    } else { $_ }
+}
+output $Out $Param "get_firewall_rule_$((Get-Date).ToFileTimeUtc()).json"
