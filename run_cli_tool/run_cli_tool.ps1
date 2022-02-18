@@ -1,6 +1,6 @@
-function Confirm-FilePath ([string] $String) {
-    if (![string]::IsNullOrEmpty($String)) {
-        if ($String -match 'HarddiskVolume\d+\\') {
+function validate ([string] $Str) {
+    if (![string]::IsNullOrEmpty($Str)) {
+        if ($Str -match 'HarddiskVolume\d+\\') {
             $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
@@ -10,20 +10,17 @@ public static extern uint QueryDosDevice(
 '@
             $StrBld = New-Object System.Text.StringBuilder(65536)
             $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
-            foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
+            foreach ($Vol in (gwmi Win32_Volume | ? { $_.DriveLetter })) {
                 [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
                 $Ntp = [regex]::Escape($StrBld.ToString())
-                $String | Where-Object { $_ -match $Ntp } | ForEach-Object {
-                    $_ -replace $Ntp, $Vol.DriveLetter
-                }
+                $Str | ? { $_ -match $Ntp } | % { $_ -replace $Ntp, $Vol.DriveLetter }
             }
-        } else {
-            $String
         }
+        else { $Str }
     }
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$File = Confirm-FilePath $Param.File
+$File = validate $Param.File
 if (!$File) {
     throw "Missing required parameter 'File'."
 } elseif ((Test-Path $File) -eq $false) {
@@ -31,26 +28,26 @@ if (!$File) {
 } elseif ((Test-Path $File -PathType Leaf) -eq $false) {
     throw "'File' must be a file."
 }
-$Json = "run_cli_tool_$((Get-Date).ToFileTimeUtc()).json"
 $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
+if ((Test-Path $Rtr) -eq $false) { ni $Rtr -ItemType Directory }
+$Json = "run_cli_tool_$((Get-Date).ToFileTimeUtc()).json"
 $Start = @{
     FilePath               = $File
-    RedirectStandardOutput = "$Rtr\$Json"
+    RedirectStandardOutput = (Join-Path $Rtr $Json)
     PassThru               = $true
 }
 if ($Param.ArgumentList) {
     $Start['ArgumentList'] = $Param.ArgumentList
 }
-Start-Process @Start | ForEach-Object {
-    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Output',($Start.RedirectStandardOutput))))
+start @Start | % {
+    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Json',$Start.RedirectStandardOutput)))
     if ($Param.Delete -eq $true) {
         $Wait = @{
             FilePath     = 'powershell.exe'
             ArgumentList = "-Command &{ Wait-Process $($_.Id); Start-Sleep 10; Remove-Item $File -Force }"
             PassThru     = $true
         }
-        [void] (Start-Process @Wait)
+        [void] (start @Wait)
     }
-    $_ | Select-Object Id, ProcessName, Output | ConvertTo-Json -Compress
+    $_ | select Id, ProcessName, Json | ConvertTo-Json -Compress
 }

@@ -1,5 +1,5 @@
 ## DESCRIPTION
-Run a CLI-based tool and capture the output to Json
+Run a CLI-based tool that produces Json and capture the output
 
 ## PARAMETER File
 Path to the file
