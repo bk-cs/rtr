@@ -1,34 +1,10 @@
-function Confirm-FilePath ([string] $String) {
-    if (![string]::IsNullOrEmpty($String)) {
-        if ($String -match 'HarddiskVolume\d+\\') {
-            $Def = @'
-[DllImport("kernel32.dll", SetLastError = true)]
-public static extern uint QueryDosDevice(
-    string lpDeviceName,
-    System.Text.StringBuilder lpTargetPath,
-    uint ucchMax);
-'@
-            $StrBld = New-Object System.Text.StringBuilder(65536)
-            $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
-            foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
-                [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
-                $Ntp = [regex]::Escape($StrBld.ToString())
-                $String | Where-Object { $_ -match $Ntp } | ForEach-Object {
-                    $_ -replace $Ntp, $Vol.DriveLetter
-                }
-            }
-        } else {
-            $String
-        }
-    }
-}
-function Invoke-Falcon ([object] $Object) {
-    if (!$Object.Method) { $Object['Method'] = 'GET' }
-    if (!$Object.Headers) { $Object['Headers'] = @{ Accept = 'application/json' }}
+function falcon ([object] $Obj) {
+    if (!$Obj.Method) { $Obj['Method'] = 'GET' }
+    if (!$Obj.Headers) { $Obj['Headers'] = @{ Accept = 'application/json' }}
     if ((!$Falcon.Expiration -or $Falcon.Expiration -le (Get-Date).AddSeconds(600)) -and
-    $Object.Uri -ne '/oauth2/token') {
-        Invoke-Falcon @{ Uri = '/oauth2/token'; Method = 'POST'; Headers = @{ Accept = 'application/json';
-        'Content-Type' = 'application/x-www-form-urlencoded' }; Body = $Falcon.ApiClient } | ForEach-Object {
+    $Obj.Uri -ne '/oauth2/token') {
+        falcon @{ Uri = '/oauth2/token'; Method = 'POST'; Headers = @{ Accept = 'application/json';
+        'Content-Type' = 'application/x-www-form-urlencoded' }; Body = $Falcon.ApiClient } | % {
             if ($_ -match 'expires_in') {
                 $Falcon['Expiration'] = (Get-Date).AddSeconds(([regex]::Matches($_,
                 '"expires_in": (?<seconds>\d*),')[0].Groups['seconds'].Value))
@@ -39,42 +15,85 @@ function Invoke-Falcon ([object] $Object) {
             } else { throw 'Failed to retrieve authorization token.' }
         }
     }
-    ($Object.Headers).GetEnumerator().foreach{ $Falcon.WebClient.Headers.Add($_.Key, $_.Value) }
-    if ($Object.Method -eq 'GET' -and $Object.Outfile) {
-        $Falcon.WebClient.DownloadFile($Object.Uri, $Object.Outfile)
-    } elseif ($Object.Method -eq 'POST' -and $Object.File) {
-        if ((Test-Path $Object.File -PathType Leaf) -eq $false) {
-            throw "'$($Object.File)' can not be found or is not a file."
+    ($Obj.Headers).GetEnumerator().foreach{ $Falcon.WebClient.Headers.Add($_.Key, $_.Value) }
+    if ($Obj.Method -eq 'GET' -and $Obj.Outfile) {
+        $Falcon.WebClient.DownloadFile($Obj.Uri, $Obj.Outfile)
+    } elseif ($Obj.Method -eq 'POST' -and $Obj.File) {
+        if ((Test-Path $Obj.File -PathType Leaf) -eq $false) {
+            throw "'$($Obj.File)' can not be found or is not a file."
         }
-        $ByteContent = Get-Content -Path $Object.File -Encoding Byte -Raw
-        [System.Text.Encoding]::UTF8.GetString($Falcon.WebClient.UploadData($Object.Uri, $ByteContent))
-    } elseif ($Object.Method -eq 'POST' -and $Object.Body) {
-        $Falcon.WebClient.UploadString($Object.Uri, $Object.Body)
+        $ByteContent = gc -Path $Obj.File -Encoding Byte -Raw
+        [System.Text.Encoding]::UTF8.GetString($Falcon.WebClient.UploadData($Obj.Uri, $ByteContent))
+    } elseif ($Obj.Method -eq 'POST' -and $Obj.Body) {
+        $Falcon.WebClient.UploadString($Obj.Uri, $Obj.Body)
     } else {
-        $Request = $Falcon.WebClient.OpenRead($Object.Uri)
+        $Request = $Falcon.WebClient.OpenRead($Obj.Uri)
         $Stream = New-Object System.IO.StreamReader $Request
         $Stream.ReadToEnd()
         @($Request, $Stream).Where({ $_ }).foreach{ $_.Dispose() }
     }
-    if ($Object.Headers) {
-        ($Object.Headers.Keys).Where({ $Falcon.WebClient.Headers.Get($_) }).foreach{
+    if ($Obj.Headers) {
+        ($Obj.Headers.Keys).Where({ $Falcon.WebClient.Headers.Get($_) }).foreach{
             $Falcon.WebClient.Headers.Remove($_)
         }
     }
     if ($Falcon.WebClient.ResponseHeaders.Get('X-Ratelimit-RetryAfter')) {
-        $RetryAfter = ([System.DateTimeOffset]::FromUnixTimeSeconds($Falcon.WebClient.ResponseHeaders.Get(
+        $Retry = ([System.DateTimeOffset]::FromUnixTimeSeconds($Falcon.WebClient.ResponseHeaders.Get(
             'X-Ratelimit-RetryAfter'))).Second
-        Start-Sleep -Seconds $RetryAfter
-        Invoke-Falcon $Object
+        sleep $Retry
+        falcon $Obj
     }
 }
-function Write-Output ([object] $Object, [object] $Param, [string] $Json) {
-    if ($Object -and $Param.Log -eq $true) {
+function output ([object] $Obj, [object] $Param, [string] $Json) {
+    if ($Obj -and $Param.Log -eq $true) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr) -eq $false) { New-Item $Rtr -ItemType Directory }
-        $Object | ForEach-Object { $_ | ConvertTo-Json -Compress >> "$Rtr\$Json" }
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        $O = @{ tags = @{ json = $Json; script = $Json -replace '_\d+\.json$','.ps1';
+            host = [System.Net.Dns]::GetHostName() }}
+        $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
+            '7058-48c9-a204-725362b67639}\Default') 2>$null
+        if ($R) {
+            $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+        }
+        $Evt = $Obj | % {
+            $Att = @{}
+            $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Att }
+        }
+        if (($Evt | measure).Count -eq 1) {
+            $O['events'] = @($Evt)
+            $O | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+        } elseif (($Evt | measure).Count -gt 1) {
+            for ($i = 0; $i -lt ($Evt | measure).Count; $i += 200) {
+                $C = $O.Clone()
+                $C['events'] = $Evt[$i..($i + 199)]
+                $C | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+            }
+        }
     }
-    $Object | ForEach-Object { $_ | ConvertTo-Json -Compress }
+    $Obj | ConvertTo-Json -Compress
+}
+function validate ([string] $Str) {
+    if (![string]::IsNullOrEmpty($Str)) {
+        if ($Str -match 'HarddiskVolume\d+\\') {
+            $Def = @'
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern uint QueryDosDevice(
+    string lpDeviceName,
+    System.Text.StringBuilder lpTargetPath,
+    uint ucchMax);
+'@
+            $StrBld = New-Object System.Text.StringBuilder(65536)
+            $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
+            foreach ($Vol in (gwmi Win32_Volume | ? { $_.DriveLetter })) {
+                [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
+                $Ntp = [regex]::Escape($StrBld.ToString())
+                $Str | ? { $_ -match $Ntp } | % { $_ -replace $Ntp, $Vol.DriveLetter }
+            }
+        }
+        else { $Str }
+    }
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
 @('Hostname','ClientId','ClientSecret').foreach{
@@ -91,7 +110,7 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
         }
     }
 }
-$File = Confirm-FilePath $Param.File
+$File = validate $Param.File
 if (!$File) {
     throw "Missing required parameter 'File'."
 } elseif ((Test-Path $File) -eq $false) {
@@ -112,7 +131,7 @@ if ($Param.MemberCid) {
 }
 $Falcon.WebClient.BaseAddress = $Param.Hostname
 $Falcon.WebClient.Encoding = [System.Text.Encoding]::UTF8
-$EnvId = if ((Get-WmiObject -Class Win32_OperatingSystem).Caption -match 'Windows 10') {
+$EnvId = if ((gwmi -Class Win32_OperatingSystem).Caption -match 'Windows 10') {
     160
 } elseif ([Environment]::Is64BitOperatingSystem -eq $true) {
     110
@@ -121,7 +140,7 @@ $EnvId = if ((Get-WmiObject -Class Win32_OperatingSystem).Caption -match 'Window
 }
 $Comment = "$($env:COMPUTERNAME)_$((Get-Date).ToFileTimeUtc())"
 $Sample = try {
-    Invoke-Falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File | Split-Path -Leaf)&comment=$Comment";
+    falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File | Split-Path -Leaf)&comment=$Comment";
         Method = 'POST'; Headers = @{ Accept = 'application/json'; 'Content-Type' = 'application/octet-stream' };
         File = $File }
 } catch {
@@ -129,7 +148,7 @@ $Sample = try {
 }
 $Sha256 = [regex]::Matches($Sample,'"sha256": "(?<sha256>\w{64})",?')[0].Groups['sha256'].Value
 $Submit = try {
-    Invoke-Falcon @{ Uri = '/falconx/entities/submissions/v1'; Method = 'POST'; Headers = @{ Accept =
+    falcon @{ Uri = '/falconx/entities/submissions/v1'; Method = 'POST'; Headers = @{ Accept =
         'application/json'; 'Content-Type' = 'application/json' }; Body = '{"sandbox":[{"environment_id":' +
         $EnvId + ',"sha256":"' + $Sha256 + '","submit_name":"' + $Comment + '"}]}' }
 } catch {
@@ -143,4 +162,4 @@ $Output = @{
     QuotaInProgress = [regex]::Matches($Submit,'"in_progress": (?<in_progress>\d+),?')[0].Groups[
         'in_progress'].Value
 }
-Write-Output $Output $Param "submit_sandbox_$((Get-Date).ToFileTimeUtc()).json"
+output $Output $Param "submit_sandbox_$((Get-Date).ToFileTimeUtc()).json"
