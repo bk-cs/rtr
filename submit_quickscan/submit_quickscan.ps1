@@ -146,7 +146,7 @@ $Sub = try {
     throw 'Failed submission to Falcon X QuickScan.'
 }
 $Id = [regex]::Matches($Sub,'"(?<id>\w{32}_\w{32})",?')[0].Groups['id'].Value
-$Out = @{
+$Out = [PSCustomObject] @{
     SubmissionId    = $Id
     Sha256          = $Sha256
     Verdict         = 'in_progress'
