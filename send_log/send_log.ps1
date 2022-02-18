@@ -1,6 +1,6 @@
-function Confirm-FilePath ([string] $String) {
-    if (![string]::IsNullOrEmpty($String)) {
-        if ($String -match 'HarddiskVolume\d+\\') {
+function validate ([string] $Str) {
+    if (![string]::IsNullOrEmpty($Str)) {
+        if ($Str -match 'HarddiskVolume\d+\\') {
             $Def = @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint QueryDosDevice(
@@ -10,139 +10,75 @@ public static extern uint QueryDosDevice(
 '@
             $StrBld = New-Object System.Text.StringBuilder(65536)
             $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
-            foreach ($Vol in (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter })) {
+            foreach ($Vol in (gwmi Win32_Volume | ? { $_.DriveLetter })) {
                 [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
                 $Ntp = [regex]::Escape($StrBld.ToString())
-                $String | Where-Object { $_ -match $Ntp } | ForEach-Object {
-                    $_ -replace $Ntp, $Vol.DriveLetter
-                }
+                $Str | ? { $_ -match $Ntp } | % { $_ -replace $Ntp, $Vol.DriveLetter }
             }
-        } else {
-            $String
         }
+        else { $Str }
     }
 }
-function Send-ToHumio ([string] $Cloud, [string] $Token, [array] $Array) {
-    $Invoke = @{
-        Uri     = "$($Cloud)api/v1/ingest/humio-structured/"
-        Method  = 'post'
-        Headers = @{ Authorization = "Bearer $($Token)"; ContentType = 'application/json' }
+function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
+    $Inv = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
+        Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
+    [array] $Wait = @()
+    foreach ($Obj in $Arr) {
+        try { $Str = [System.IO.File]::Open($Obj,'Open','Write'); $Str.Close(); $Str.Dispose() }
+        catch { $Wait += $Obj }
     }
-    $Body = @{ tags = @{ script = 'send_log.ps1' }}
-    $Reg = reg query ("HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-70" +
-        "58-48c9-a204-725362b67639}\Default") 2>$null
-    if ($Reg) {
-        $Body.tags['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
-        $Body.tags['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
-    } else {
-        $Body.tags['host'] = [System.Net.Dns]::GetHostName()
-    }
-    [array] $Locked = @()
-    foreach ($Path in $Array) {
-        try {
-            $Stream = [System.IO.File]::Open($Path,'Open','Write')
-            $Stream.Close()
-            $Stream.Dispose()
-        } catch {
-            $Locked += $Path
-        }
-    }
-    $Array | Where-Object { $Locked -notcontains $_ } | ForEach-Object {
-        $Output = [PSCustomObject] @{ Json = $_; Sent = 'false'; Deleted = 'false'; Status = $null }
-        try {
-            $Json = Get-Content $_ | ConvertFrom-Json
-            $Clone = $Body.Clone()
-            $Clone.tags['json'] = $_
-            $Events = $Json | ForEach-Object {
-                $Item = @{}
-                $_.PSObject.Properties | ForEach-Object { $Item[$_.Name]=$_.Value }
-                ,@{ timestamp  = Get-Date -Format o; attributes = $Item }
-            }
-            $Clone['events'] = @($Events)
-            $Clone = ConvertTo-Json @($Clone) -Depth 8 -Compress
-        } catch {
-            $Output.Status = 'failure_before_request'
-        }
-        try {
-            $Request = Invoke-WebRequest @Invoke -Body $Clone -UseBasicParsing
-            if ($Request.StatusCode) {
-                $Output.Status = $Request.StatusCode.ToString()
-            }
-            if ($Request.StatusCode -eq 200) {
-                $Output.Sent = $true
-                Remove-Item $_
-                if ((Test-Path $_) -eq $false) {
-                    $Output.Deleted = $true
+    $Out = $Arr | ? { $Wait -notcontains $_ } | % {
+        $Imp = try { gc $_ | ConvertFrom-Json } catch {}
+        if (!$Imp) {
+            @{ Json = $_; Sent = $false; Deleted = $false; Status = 'parse_failure' }
+        } else {
+            $Req = $Imp | % { iwr @Inv -Body (ConvertTo-Json @($_) -Depth 8 -Compress) -UseBasicParsing }
+            if ($Req.StatusCode -ne 200) {
+                @{ Json = $_; Sent = $false; Deleted = $false; Status = 'send_failure' }
+            } else {
+                rm $_
+                if ((Test-Path $_ -PathType Leaf) -eq $false) {
+                    @{ Json = $_; Sent = $true; Deleted = $true; Status = 'OK' }
                 } else {
-                    $Output.Status = 'failed_to_delete'
+                    @{ Json = $_; Sent = $true; Deleted = $false; Status = 'delete_failure' }
                 }
             }
-        } catch {
-            $Output.Status = if ($Request.StatusCode) {
-                $Request.StatusCode.ToString()
-            } else {
-                'failure_during_request'
-            }
         }
-        $Output | ConvertTo-Json -Compress
     }
-    if ($Locked) {
-        [scriptblock] $Script = {
-            param([string] $Cloud, [string] $Token, [array] $Locked)
-            $Invoke = @{
-                Uri     = ($Cloud + 'api/v1/ingest/humio-structured/')
-                Method  = 'post'
-                Headers = @{ Authorization = ('Bearer' + $Token); ContentType = 'application/json' }
-            }
-            $Body = @{ tags = @{ script = 'send_log.ps1' }}
-            $Reg = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e' +
-                '0423f-7058-48c9-a204-725362b67639}\Default') 2>$null
-            if ($Reg) {
-                $Body.tags['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
-                $Body.tags['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
-            } else {
-                $Body.tags['host'] = [System.Net.Dns]::GetHostName()
-            }
-            $Locked | ForEach-Object {
+    if ($Wait) {
+        [scriptblock] $Scr = {
+            param([string] $Cloud, [string] $Token, [array] $Arr)
+            $Inv = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
+                Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
+            foreach ($File in $Arr) {
+                $i = 0
                 do {
-                    $Unlocked = try {
-                        Start-Sleep -Seconds 30
-                        $Stream = [System.IO.File]::Open($_,'Open','Write')
-                        $Stream.Close()
-                        $Stream.Dispose()
+                    $Unl = try {
+                        sleep 30
+                        $Str = [System.IO.File]::Open($File,'Open','Write'); $Str.Close(); $Str.Dispose()
                         $true
                     } catch {
                         $false
                     }
                     $i += 30
-                } until ( $Unlocked -eq $true -or $i -eq 600 )
-                $Json = Get-Content $_ | ConvertFrom-Json
-                $Clone = $Body.Clone()
-                $Events = $Json | ForEach-Object {
-                    $Item = @{}
-                    $_.PSObject.Properties | ForEach-Object { $Item[$_.Name]=$_.Value }
-                    ,@{ timestamp  = Get-Date -Format o; attributes = $Item }
+                } until ( $Unl -eq $true -or $i -eq 600 )
+                if ($Unl -eq $true) {
+                    try {
+                        $Imp = try { gc $File | ConvertFrom-Json } catch {}
+                        if ($Imp) {
+                            $Imp | % { iwr @Inv -Body (ConvertTo-Json @($_) -Depth 8 -Compress) -UseBasicParsing }
+                        }
+                    } catch {}
                 }
-                $Clone['events'] = @($Events)
-                $Clone = ConvertTo-Json @($Clone) -Depth 8 -Compress
-                try {
-                    $Request = Invoke-WebRequest @Invoke -Body $Clone -UseBasicParsing
-                    if ($Request.StatusCode -eq 200) { Remove-Item $_ }
-                } catch {}
             }
         }
-        $Start = @{
-            FilePath     = 'powershell.exe'
-            ArgumentList = "-Command &{$Script} $Cloud $Token $($Locked -join ', ')"
-            PassThru     = $true
-        }
-        Start-Process @Start | ForEach-Object {
-            $Locked | ForEach-Object {
-                [PSCustomObject] @{ Json = $_; Sent = $false; Deleted = $false;
-                    Status = 'waiting_for_file_access' } | ConvertTo-Json -Compress
-            }
+        $Sta = @{ FilePath = 'powershell.exe'; ArgumentList = "-Command &{$Scr} '$Cloud' '$Token' '$(
+            $Wait -join ', ')'"; PassThru = $true }
+        $Out += start @Sta | % {
+            $Wait | % { @{ Json = $_; Sent = $false; Deleted = $false; Status = 'waiting_to_access' }}
         }
     }
+    $Out | ConvertTo-Json -Compress
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
 @('Cloud','Token').foreach{
@@ -161,20 +97,20 @@ $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
 if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 }
-[array] $Array = if ($Param.Json) {
-    $Param.Json | ForEach-Object { Confirm-FilePath $_ }
+[array] $Arr = if ($Param.Json) {
+    $Param.Json | % { validate $_ }
 } else {
-    $Rtr = Join-Path $env:SystemRoot '\system32\drivers\CrowdStrike\Rtr'
-    (Get-ChildItem $Rtr -Filter *.json -File -EA 0).FullName
+    $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
+    (gci $Rtr -Filter *.json -File -EA 0).FullName
 }
-if (-not $Array) {
+if (-not $Arr) {
     throw 'No Json files found.'
 }
-$Array | Where-Object { -not [string]::IsNullOrEmpty($_) } | ForEach-Object {
-    if ((Test-Path $_) -eq $false) {
+$Arr | ? { ![string]::IsNullOrEmpty($_) } | % {
+    if ((Test-Path $_ -PathType Leaf) -eq $false) {
         throw "Cannot find path '$_' because it does not exist."
-    } elseif ((Test-Path $_ -PathType Leaf) -eq $false -or ($_ -notmatch '\.json$')) {
+    } elseif ($_ -notmatch '\.json$') {
         throw "'$_' is not a Json file."
     }
 }
-Send-ToHumio $Param.Cloud $Param.Token $Array
+shumio $Param.Cloud $Param.Token $Arr
