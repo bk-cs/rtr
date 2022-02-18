@@ -56,7 +56,7 @@ function output ([object] $Obj, [object] $Param, [string] $Json) {
             $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
             $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
         }
-        $Evt = $Obj | % {
+        $Evt = @($Obj).foreach{
             $Att = @{}
             $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
             ,@{ timestamp = Get-Date -Format o; attributes = $Att }
@@ -154,7 +154,7 @@ $Submit = try {
 } catch {
     throw 'Failed submission to Falcon X Sandbox.'
 }
-$Output = @{
+$Out = [PSCustomObject] @{
     SubmissionId    = [regex]::Matches($Submit,'"id": "(?<id>\w{32}_\w{32})",?')[0].Groups['id'].Value
     SubmissionName  = $Comment
     QuotaTotal      = [regex]::Matches($Submit,'"total": (?<total>\d+),?')[0].Groups['total'].Value
@@ -162,4 +162,4 @@ $Output = @{
     QuotaInProgress = [regex]::Matches($Submit,'"in_progress": (?<in_progress>\d+),?')[0].Groups[
         'in_progress'].Value
 }
-output $Output $Param "submit_sandbox_$((Get-Date).ToFileTimeUtc()).json"
+output $Out $Param "submit_sandbox_$((Get-Date).ToFileTimeUtc()).json"

@@ -18,7 +18,7 @@ function output ([object] $Obj, [object] $Param, [string] $Json) {
             $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
             $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
         }
-        $Evt = $Obj | % {
+        $Evt = @($Obj).foreach{
             $Att = @{}
             $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
             ,@{ timestamp = Get-Date -Format o; attributes = $Att }
