@@ -37,7 +37,7 @@ function output ([object] $Obj, [object] $Param, [string] $Json) {
     $Obj | ConvertTo-Json -Compress
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Out = Get-Process -EA 0 | select Id, Name, StartTime, WorkingSet, CPU, HandleCount, Path |
+$Out = ps -EA 0 | select Id, Name, StartTime, WorkingSet, CPU, HandleCount, Path |
 % {
     $_.PSObject.Properties | % {
         if ($_.Value -is [datetime]) { $_.Value = try { $_.Value.ToFileTimeUtc() } catch { $_.Value }}

@@ -29,6 +29,6 @@ function output ([object] $Obj, [object] $Param, [string] $Json) {
     $Obj | ConvertTo-Json -Compress
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Out = Get-Process -IncludeUserName -EA 0 | ? { $_.SessionId -ne 0 } | select SessionId,
+$Out = ps -IncludeUserName -EA 0 | ? { $_.SessionId -ne 0 } | select SessionId,
     UserName | sort -Unique
 output $Out $Param "get_current_user_$((Get-Date).ToFileTimeUtc()).json"

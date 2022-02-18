@@ -29,7 +29,7 @@ function output ([object] $Obj, [object] $Param, [string] $Json) {
     $Obj | ConvertTo-Json -Compress
 }
 $Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-$Process = Get-Process | select Id, Name
+$Process = ps | select Id, Name
 $Out = @(@(Get-NetTcpConnection -EA 0 | select LocalAddress, LocalPort, RemoteAddress, RemotePort, State,
 OwningProcess) + @(Get-NetUDPEndpoint -EA 0 | select LocalAddress, LocalPort)) | % {
     $Protocol = if ($_.State) { 'TCP' } else { 'UDP' }
