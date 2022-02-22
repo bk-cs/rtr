@@ -52,9 +52,9 @@ if ((Test-Path $Rtr) -eq $false) { ni $Rtr -ItemType Directory }
 $Json = Join-Path $Rtr "find_file_$((Get-Date).ToFileTimeUtc()).json"
 $Inputs = @($Param.PSObject.Properties.foreach{ "-$($_.Name) '$($_.Value)'" }) -join ' '
 $Start = @{
-    FilePath               = 'powershell.exe'
-    ArgumentList           = "-Command &{$Script} '$Json' $Inputs"
-    PassThru               = $true
+    FilePath     = 'powershell.exe'
+    ArgumentList = "-Command &{$Script} '$Json' $Inputs"
+    PassThru     = $true
 }
 start @Start | select Id, ProcessName | % {
     $_.PSObject.Properties.Add((New-Object PSNoteProperty('Json',$Json)))
