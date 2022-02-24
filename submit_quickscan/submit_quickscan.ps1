@@ -59,8 +59,9 @@ function output ([object] $Obj, [object] $Param, [string] $Script) {
             $A['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
         }
         $E = @($Obj).foreach{
-            $_.PSObject.Properties | % { $A[$_.Name]=$_.Value }
-            ,@{ timestamp = Get-Date -Format o; attributes = $A }
+            $C = $A.Clone()
+            $_.PSObject.Properties | % { $C[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $C }
         }
         for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
             $B = @{events=@($E[$i..($i + 199)])}
