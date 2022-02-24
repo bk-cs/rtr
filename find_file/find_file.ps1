@@ -1,9 +1,60 @@
-$Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-if ((Test-Path $Param.Path -PathType Container) -eq $false) {
-    throw "Cannot find path '$($Param.Path)' because it does not exist or is not a directory."
+function parse ([string] $String) {
+    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+    switch ($Param) {
+        { -not $_.Path } {
+            throw "Missing required parameter 'Path'."
+        }
+        { $_.Path } {
+            $_.Path = validate $_.Path
+            if ((Test-Path $_.Path -PathType Container) -eq $false) {
+                throw "Cannot find path '$($_.Path)' because it does not exist or is not a directory."
+            }
+        }
+        { $_.Cloud -and $_.Cloud -notmatch '/$' } {
+            $_.Cloud += '/'
+        }
+        { ($_.Cloud -and -not $_.Token) -or ($_.Token -and -not $_.Cloud) } {
+            throw "Both 'Cloud' and 'Token' are required when sending results to Humio."
+        }
+        { $_.Cloud -and $_.Cloud -notmatch '^https://cloud(.(community|us))?.humio.com/$' } {
+            throw "'$($_.Cloud)' is not a valid Humio cloud value."
+        }
+        { $_.Token -and $_.Token -notmatch '^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$' } {
+            throw "'$($_.Token)' is not a valid Humio ingest token."
+        }
+        { $_.Cloud -and $_.Token -and [Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12' } {
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            } catch {
+                throw $_
+            }
+        }
+    }
+    $Param
 }
-$Script = {
-    param($Json, $Path, $Filter, $Include, $Exclude)
+function validate ([string] $Str) {
+    if (![string]::IsNullOrEmpty($Str)) {
+        if ($Str -match 'HarddiskVolume\d+\\') {
+            $Def = @'
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern uint QueryDosDevice(
+    string lpDeviceName,
+    System.Text.StringBuilder lpTargetPath,
+    uint ucchMax);
+'@
+            $StrBld = New-Object System.Text.StringBuilder(65536)
+            $K32 = Add-Type -MemberDefinition $Def -Name Kernel32 -Namespace Win32 -PassThru
+            foreach ($Vol in (gwmi Win32_Volume | ? { $_.DriveLetter })) {
+                [void] $K32::QueryDosDevice($Vol.DriveLetter,$StrBld,65536)
+                $Ntp = [regex]::Escape($StrBld.ToString())
+                $Str | ? { $_ -match $Ntp } | % { $_ -replace $Ntp, $Vol.DriveLetter }
+            }
+        }
+        else { $Str }
+    }
+}
+[scriptblock] $Script = {
+    param([string] $Path, [string] $Filter, [string] $Include, [string] $Exclude, [string] $Cloud, [string] $Token)
     function hash ([object] $Obj, [string] $Str) {
         foreach ($I in $Obj) {
             $E = ($Obj | ? { $_.$Str -eq $I.$Str } | select -Unique).Sha256
@@ -12,51 +63,71 @@ $Script = {
         }
         $Obj
     }
-    $Param = @{ Path = $Path; Filter = $Filter; Recurse = $true; File = $true }
-    $PSBoundParameters.GetEnumerator().Where({ $Param.Keys -notcontains $_.Key }).foreach{
-        $Param[$_.Key] = $_.Value
+    function output ([object] $Obj, [string] $Script, [string] $Cloud, [string] $Token) {
+        if (-not $Obj) {
+            $Obj = @{ error = "no_results" }
+        }
+        if ($Cloud -and $Token) {
+            $Iwr = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post';
+                Headers = @{ Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
+        }
+        $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        $Json = $Script -replace '\.ps1', ('_' + [string] (Get-Date).ToFileTimeUtc() + '.json')
+        $O = @{ tags = @{ script = $Script; host = [System.Net.Dns]::GetHostName() }}
+        $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
+            '7058-48c9-a204-725362b67639}\Default') 2>$null
+        if ($R) {
+            $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+        }
+        $E = @($Obj).foreach{
+            $Att = @{}; $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Att }
+        }
+        if (($E | measure).Count -eq 1) {
+            $O['events'] = @($E)
+            if ($Iwr) {
+                try {
+                    iwr @Iwr -Body (ConvertTo-Json @($O) -Depth 8 -Compress) -UseBasicParsing
+                } catch {
+                    ConvertTo-Json @($O) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+                }
+            } else {
+                ConvertTo-Json @($O) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+            }
+        } elseif (($E | measure).Count -gt 1) {
+            for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
+                $C = $O.Clone(); $C['events'] = $E[$i..($i + 199)]
+                if ($Iwr) {
+                    try {
+                        iwr @Iwr -Body (ConvertTo-Json @($C) -Depth 8 -Compress) -UseBasicParsing
+                    } catch {
+                        ConvertTo-Json @($C) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+                    }
+                } else {
+                    ConvertTo-Json @($C) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+                }
+            }
+        }
     }
-    $Obj = gci @Param -EA 0 | select FullName, CreationTime, LastWriteTime, LastAccessTime | % {
+    $Gci = @{ Path = $Path; Filter = $Filter; Recurse = $true; File = $true }
+    if ($Include) { $Gci['Include'] = $Include }
+    if ($Exclude) { $Gci['Exclude'] = $Exclude }
+    $Out = gci @Gci -EA 0 | select FullName, CreationTime, LastWriteTime, LastAccessTime | % {
         $_.PSObject.Properties | % {
             if ($_.Value -is [datetime]) { $_.Value = try { $_.Value.ToFileTimeUtc() } catch { $_.Value } }
         }
         $_
     }
-    $Obj = hash $Obj FullName
-    $O = @{ tags = @{ json = $Json; script = $Json -replace '_\d+\.json$','.ps1';
-        host = [System.Net.Dns]::GetHostName() }}
-    $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
-        '7058-48c9-a204-725362b67639}\Default') 2>$null
-    if ($R) {
-        $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
-        $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
-    }
-    $Evt = @($Obj).foreach{
-        $Att = @{}
-        $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
-        ,@{ timestamp = Get-Date -Format o; attributes = $Att }
-    }
-    if (($Evt | measure).Count -eq 1) {
-        $O['events'] = @($Evt)
-        $O | ConvertTo-Json -Depth 8 -Compress >> $Json
-    } elseif (($Evt | measure).Count -gt 1) {
-        for ($i = 0; $i -lt ($Evt | measure).Count; $i += 200) {
-            $C = $O.Clone()
-            $C['events'] = $Evt[$i..($i + 199)]
-            $C | ConvertTo-Json -Depth 8 -Compress >> $Json
-        }
-    }
+    $Out = hash $Out FullName
+    output $Out 'find_file.ps1' $Cloud $Token
 }
-$Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-if ((Test-Path $Rtr) -eq $false) { ni $Rtr -ItemType Directory }
-$Json = Join-Path $Rtr "find_file_$((Get-Date).ToFileTimeUtc()).json"
+$Param = if ($args[0]) { parse $args[0] }
 $Inputs = @($Param.PSObject.Properties.foreach{ "-$($_.Name) '$($_.Value)'" }) -join ' '
-$Start = @{
-    FilePath     = 'powershell.exe'
-    ArgumentList = "-Command &{$Script} '$Json' $Inputs"
-    PassThru     = $true
-}
-start @Start | select Id, ProcessName | % {
-    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Json',$Json)))
+$Start = @{ FilePath = 'powershell.exe'; ArgumentList = "-Command &{$Script} $Inputs" }
+start @Start -PassThru | select Id, ProcessName | % {
+    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Output',
+        (Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'))))
     $_ | ConvertTo-Json -Compress
 }
