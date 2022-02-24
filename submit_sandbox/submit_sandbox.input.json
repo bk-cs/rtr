@@ -18,8 +18,11 @@
     "MemberCid": {
       "type": "string"
     },
-    "Log": {
-      "type": "boolean"
+    "Cloud": {
+      "type": "string"
+    },
+    "Token": {
+      "type": "string"
     }
   },
   "required": [

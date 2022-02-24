@@ -44,35 +44,40 @@ function falcon ([object] $Obj) {
         falcon $Obj
     }
 }
-function output ([object] $Obj, [object] $Param, [string] $Json) {
-    if ($Obj -and $Param.Log -eq $true) {
+function output ([object] $Obj, [object] $Param, [string] $Script) {
+    if ($Obj -and $Param.Cloud -and $Param.Token) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
         if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
-        $O = @{ tags = @{ json = $Json; script = $Json -replace '_\d+\.json$','.ps1';
-            host = [System.Net.Dns]::GetHostName() }}
+        $Json = $Script -replace '\.ps1', "_$((Get-Date).ToFileTimeUtc()).json"
+        $Iwr = @{ Uri = @($Param.Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post';
+            Headers = @{ Authorization = @('Bearer', $Param.Token) -join ' '; ContentType = 'application/json' }}
+        $O = @{ tags = @{ script = $Script; host = [System.Net.Dns]::GetHostName() }}
         $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
             '7058-48c9-a204-725362b67639}\Default') 2>$null
         if ($R) {
             $O.tags['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
             $O.tags['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
         }
-        $Evt = @($Obj).foreach{
-            $Att = @{}
-            $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
-            ,@{ timestamp = Get-Date -Format o; attributes = $Att }
-        }
-        if (($Evt | measure).Count -eq 1) {
-            $O['events'] = @($Evt)
-            $O | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
-        } elseif (($Evt | measure).Count -gt 1) {
-            for ($i = 0; $i -lt ($Evt | measure).Count; $i += 200) {
-                $C = $O.Clone()
-                $C['events'] = $Evt[$i..($i + 199)]
-                $C | ConvertTo-Json -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+        $E = @($Obj).foreach{
+            $Att = @{}; $_.PSObject.Properties | % { $Att[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Att }}
+        if (($E | measure).Count -eq 1) {
+            $O['events'] = @($E)
+            $Req = try { iwr @Iwr -Body (ConvertTo-Json @($O) -Depth 8 -Compress) -UseBasicParsing } catch {}
+            if ($Req.StatusCode -ne 200) {
+                ConvertTo-Json @($O) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+            }
+        } elseif (($E | measure).Count -gt 1) {
+            for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
+                $C = $O.Clone(); $C['events'] = $E[$i..($i + 199)]
+                $Req = try { iwr @Iwr -Body (ConvertTo-Json @($C) -Depth 8 -Compress) -UseBasicParsing } catch {}
+                if ($Req.StatusCode -ne 200) {
+                    ConvertTo-Json @($C) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
+                }
             }
         }
     }
-    $Obj | ConvertTo-Json -Compress
+    $Obj | ConvertTo-Json -Depth 8 -Compress
 }
 function validate ([string] $Str) {
     if (![string]::IsNullOrEmpty($Str)) {
@@ -95,33 +100,57 @@ public static extern uint QueryDosDevice(
         else { $Str }
     }
 }
-$Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-@('Hostname','ClientId','ClientSecret').foreach{
-    if (!$Param.$_) {
-        throw "Missing required parameter '$_'."
-    } elseif ($_ -eq 'Hostname') {
-        if ($Param.$_ -notmatch 'https://api(.(eu-1|laggar.gcw|us-2))?.crowdstrike.com') {
-            throw "'$($Param.$_)' is not a valid API hostname value."
+function parse ([string] $String) {
+    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+    switch ($Param) {
+        { -not $_.File } {
+            throw "Missing required parameter 'File'."
         }
-    } elseif ($_ -match '^Client') {
-        if (($_ -match 'Id$' -and $Param.$_ -notmatch '^\w{32}$') -or ($_ -match 'Secret$' -and
-        $Param.$_ -notmatch '^\w{40}$')) {
-            throw "'$($Param.$_)' is not a valid '$_' value."
+        { $_.File } {
+            $_.File = validate $_.File
+            if ((Test-Path $_.File -PathType Leaf) -eq $false) {
+                throw "Cannot find path '$($_.File)' because it does not exist or is not a file."
+            }
+        }
+        { $_.Cloud -and $_.Cloud -notmatch '/$' } {
+            $_.Cloud += '/'
+        }
+        { $_.Hostname -and $_.Hostname -notmatch '/$' } {
+            $_.Hostname += '/'
+        }
+        { $_.Hostname -and $_.Hostname -notmatch '^https://api(.(eu-1|laggar.gcw|us-2))?.crowdstrike.com/$'} {
+            throw "'$($_.Hostname)' is not a valid Falcon API hostname value."
+        }
+        { $_.ClientId -and $_.ClientId -notmatch '^\w{32}$' } {
+            throw "'$($_.ClientId)' is not a valid 'ClientId' value."
+        }
+        { $_.ClientSecret -and $_.ClientSecret -notmatch '^\w{40}$' } {
+            throw "'$($_.ClientSecret)' is not a valid 'ClientSecret' value."
+        }
+        { $_.MemberCid -and $_.MemberCid -notmatch '^\w{32}$' } {
+            throw "'$($_.MemberCid)' is not a valid 'MemberCid' value."
+        }
+        { ($_.Cloud -and -not $_.Token) -or ($_.Token -and -not $_.Cloud) } {
+            throw "Both 'Cloud' and 'Token' are required when sending results to Humio."
+        }
+        { $_.Cloud -and $_.Cloud -notmatch '^https://cloud(.(community|us))?.humio.com/$' } {
+            throw "'$($_.Cloud)' is not a valid Humio cloud value."
+        }
+        { $_.Token -and $_.Token -notmatch '^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$' } {
+            throw "'$($_.Token)' is not a valid Humio ingest token."
+        }
+        { $_.Hostname -and [Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12' } {
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            } catch {
+                throw $_
+            }
         }
     }
+    $Param
 }
-$File = validate $Param.File
-if (!$File) {
-    throw "Missing required parameter 'File'."
-} elseif ((Test-Path $File) -eq $false) {
-    throw "Cannot find path '$File' because it does not exist."
-} elseif ((Test-Path $File -PathType Leaf) -eq $false) {
-    throw "'File' must be a file."
-}
+$Param = if ($args[0]) { parse $args[0] }
 if (!($PSVersionTable.CLRVersion.ToString() -ge 3.5)) { throw '.NET Framework 3.5 or newer is required' }
-if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
-    try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { throw $_ }
-}
 $Falcon = @{
     ApiClient = "client_id=$($Param.ClientId)&client_secret=$($Param.ClientSecret)"
     WebClient = New-Object System.Net.WebClient
@@ -132,39 +161,38 @@ if ($Param.MemberCid) {
 $Falcon.WebClient.BaseAddress = $Param.Hostname
 $Falcon.WebClient.Encoding = [System.Text.Encoding]::UTF8
 $Sam = try {
-    falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($File | Split-Path -Leaf)&comment=$Comment";
+    falcon @{ Uri = "/samples/entities/samples/v3?file_name=$($Param.File | Split-Path -Leaf)&comment=$Comment";
         Method = 'POST'; Headers = @{ Accept = 'application/json'; 'Content-Type' = 'application/octet-stream' };
-        File = $File }
+        File = $Param.File } | ConvertFrom-Json
 } catch {
     throw 'Failed sample upload.'
 }
-$Sha256 = [regex]::Matches($Sam,'"sha256": "(?<sha256>\w{64})",?')[0].Groups['sha256'].Value
+$Sha256 = $Sam.resources.sha256
 $Sub = try {
     falcon @{ Uri = '/scanner/entities/scans/v1'; Method = 'POST'; Headers = @{ Accept =
-        'application/json'; 'Content-Type' = 'application/json' }; Body = '{"samples":["' + $Sha256 + '"]}' }
+        'application/json'; 'Content-Type' = 'application/json' }; Body = '{"samples":["' + $Sha256 + '"]}' } |
+        ConvertFrom-Json
 } catch {
     throw 'Failed submission to Falcon X QuickScan.'
 }
-$Id = [regex]::Matches($Sub,'"(?<id>\w{32}_\w{32})",?')[0].Groups['id'].Value
+$Id = $Sub.resources[0]
 $Out = [PSCustomObject] @{
     SubmissionId    = $Id
     Sha256          = $Sha256
     Verdict         = 'in_progress'
-    QuotaTotal      = [regex]::Matches($Sub,'"total": (?<total>\d+),?')[0].Groups['total'].Value
-    QuotaUsed       = [regex]::Matches($Sub,'"used": (?<used>\d+),?')[0].Groups['used'].Value
-    QuotaInProgress = [regex]::Matches($Sub,'"in_progress": (?<in_progress>\d+),?')[0].Groups[
-        'in_progress'].Value
+    QuotaTotal      = $Sub.meta.quota.total
+    QuotaUsed       = $Sub.meta.quota.used
+    QuotaInProgress = $Sub.meta.quota.in_progress
 }
 sleep 30
 $Res = try {
     falcon @{ Uri = "/scanner/entities/scans/v1?ids=$Id"; Method = 'GET'; Headers = @{ Accept =
-        'application/json' }}
+        'application/json' }} | ConvertFrom-Json
 } catch {}
 if ($Res) {
-    $Out.Verdict = [regex]::Matches($Res,'"verdict": "(?<verdict>.+)",?')[0].Groups['verdict'].Value
-    $Out.QuotaTotal = [regex]::Matches($Res,'"total": (?<total>\d+),?')[0].Groups['total'].Value
-    $Out.QuotaUsed = [regex]::Matches($Res,'"used": (?<used>\d+),?')[0].Groups['used'].Value
-    $Out.QuotaInProgress = [regex]::Matches($Res,'"in_progress": (?<in_progress>\d+),?')[0].Groups[
-        'in_progress'].Value
+    $Out.Verdict = ($Res.resources.samples | ? { $_.sha256 -eq $Sha256 }).verdict
+    $Out.QuotaTotal = $Res.meta.quota.total
+    $Out.QuotaUsed = $Res.meta.quota.used
+    $Out.QuotaInProgress = $Res.meta.quota.in_progress
 }
-output $Out $Param "submit_quickscan_$((Get-Date).ToFileTimeUtc()).json"
+output $Out $Param "submit_quickscan.ps1"

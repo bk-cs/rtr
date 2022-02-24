@@ -1,5 +1,7 @@
 ## DESCRIPTION
-Submit a file to Falcon X QuickScan. Requires an API Client with 'samples:write', 'quick-scan:read' and 'quick-scan:write'. The script waits 30 seconds for a result, and outputs 'in_progress' if the result has not been produced by the end of the wait period.
+Submit a file to Falcon X QuickScan. Requires an API Client with 'samples:write', 'quick-scan:read' and
+'quick-scan:write'. The script waits 30 seconds for a result, and outputs 'in_progress' if the result has not
+been produced by the end of the wait period.
 
 ## PARAMETER File
 Path to the file (Required)
@@ -16,8 +18,11 @@ CrowdStrike Falcon OAuth2 API ClientSecret (Required)
 ## PARAMETER MemberCid
 CrowdStrike Falcon Member CID
 
-## PARAMETER Log
-Save results within a Json file in the Rtr directory
+## PARAMETER Cloud
+Humio cloud base URL
+
+## PARAMETER Token
+Humio ingest token
 
 ## EXAMPLES
 
