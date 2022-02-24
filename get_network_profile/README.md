@@ -1,18 +1,21 @@
 ## DESCRIPTION
 List network profile information
 
-## PARAMETER Log
-Save results within a Json file in the Rtr directory
+## PARAMETER Cloud
+Humio cloud base URL
+
+## PARAMETER Token
+Humio ingest token
 
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_network_profile" -CommandLine=```'{"Log":true}'```
+runscript -CloudFile="get_network_profile" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
 ```
 ### PSFALCON
 ```
-PS>$CommandLine = '```' + "'$(@{ Log = $true } | ConvertTo-Json -Compress)'" + '```'
+PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
 PS>Invoke-FalconRtr runscript "-CloudFile='get_network_profile' -CommandLine=$CommandLine" -HostIds <id>, <id>
 ```
 ### FALCONPY

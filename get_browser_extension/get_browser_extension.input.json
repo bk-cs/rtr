@@ -4,8 +4,11 @@
     "Filter": {
       "type": "string"
     },
-    "Log": {
-      "type": "boolean"
+    "Cloud": {
+      "type": "string"
+    },
+    "Token": {
+      "type": "string"
     }
   },
   "type": "object"

@@ -5,8 +5,11 @@
       "type": "string",
       "format": "localFilePath"
     },
-    "Log": {
-      "type": "boolean"
+    "Cloud": {
+      "type": "string"
+    },
+    "Token": {
+      "type": "string"
     }
   },
   "required": [

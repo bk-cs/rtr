@@ -4,8 +4,11 @@ Remove 'SensorGroupingTag' values
 ## PARAMETER SensorTag
 One or more SensorTag values (Required)
 
-## PARAMETER Log
-Save results within a Json file in the Rtr directory
+## PARAMETER Cloud
+Humio cloud base URL
+
+## PARAMETER Token
+Humio ingest token
 
 ## EXAMPLES
 

@@ -1,8 +1,11 @@
 ﻿{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
-    "Log": {
-      "type": "boolean"
+    "Cloud": {
+      "type": "string"
+    },
+    "Token": {
+      "type": "string"
     }
   },
   "type": "object"

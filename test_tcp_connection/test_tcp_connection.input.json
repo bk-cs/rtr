@@ -7,8 +7,11 @@
     "Port": {
       "type": "integer"
     },
-    "Log": {
-      "type": "boolean"
+    "Cloud": {
+      "type": "string"
+    },
+    "Token": {
+      "type": "string"
     }
   },
   "type": "object"
