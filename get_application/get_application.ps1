@@ -37,7 +37,7 @@ function output ([object] $Obj, [object] $Param, [string] $Script) {
             ,@{ timestamp = Get-Date -Format o; attributes = $C }
         }
         for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
-            $B = @{events=@($E[$i..($i + 199)])}
+            $B = @{ tags = @{ type = 'crowdstrike_falcon_rtr_script' }; events = @($E[$i..($i + 199)]) }
             $Req = try { iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing } catch {}
             if ($Req.StatusCode -ne 200) {
                 ConvertTo-Json @($B) -Depth 8 -Compress >> (Join-Path $Rtr $Json)
