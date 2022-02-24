@@ -13,8 +13,11 @@ Password (Required)
 ## PARAMETER ForceLogoff
 Force logoff if the user has an active session
 
-## PARAMETER Log
-Save results within a Json file in the Rtr directory
+## PARAMETER Cloud
+Humio cloud base URL
+
+## PARAMETER Token
+Humio ingest token
 
 ## EXAMPLES
 
