@@ -31,25 +31,6 @@ function parse ([string] $String) {
                 throw "Cannot find path '$($_.File)' because it does not exist or is not a file."
             }
         }
-        { $_.Cloud -and $_.Cloud -notmatch '/$' } {
-            $_.Cloud += '/'
-        }
-        { ($_.Cloud -and -not $_.Token) -or ($_.Token -and -not $_.Cloud) } {
-            throw "Both 'Cloud' and 'Token' are required when sending results to Humio."
-        }
-        { $_.Cloud -and $_.Cloud -notmatch '^https://cloud(.(community|us))?.humio.com/$' } {
-            throw "'$($_.Cloud)' is not a valid Humio cloud value."
-        }
-        { $_.Token -and $_.Token -notmatch '^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$' } {
-            throw "'$($_.Token)' is not a valid Humio ingest token."
-        }
-        { $_.Cloud -and $_.Token -and [Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12' } {
-            try {
-                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            } catch {
-                throw $_
-            }
-        }
     }
     $Param
 }
