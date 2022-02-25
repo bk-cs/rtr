@@ -61,7 +61,7 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
                     $Obj | % { ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $_ }}
                 }
                 for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
-                    $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E[$i..($i + 199)]) }
+                    $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @(@($E)[$i..($i + 199)]) }
                     iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
                 }
             }
@@ -129,7 +129,7 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
                         }
                     }
                     for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
-                        $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E[$i..($i + 199)]) }
+                        $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @(@($E)[$i..($i + 199)]) }
                         iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
                     }
                 }
