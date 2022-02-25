@@ -1,5 +1,5 @@
 ## DESCRIPTION
-Run a CLI-based tool and save the output in a text file in the temporary RTR directory
+Run a CLI-based tool and capture the output. Because of the potential for the script to time out when run using Real-time Response, results will be sent to your Humio instance (if 'Cloud' and 'Token' are provided) or written to log files in the temporary Rtr directory.
 
 ## PARAMETER File
 Path to the file
