@@ -1,6 +1,6 @@
 ## DESCRIPTION
-Send Json files to Humio and delete them upon successful transmission. Defaults to all Json files located in
-the Rtr directory if 'File' is not specified.
+Send .txt, .csv, .json, and .log files to Humio and delete them upon successful transmission. Defaults to
+supported files located in the temporary Real-time Response directory if 'File' is not specified.
 
 ## PARAMETER Cloud
 Base Humio cloud URL (Required)
@@ -9,7 +9,7 @@ Base Humio cloud URL (Required)
 Humio ingestion token (Required)
 
 ## PARAMETER File
-Path to a specific Json file
+Path to a supported text file
 
 ## EXAMPLES
 
