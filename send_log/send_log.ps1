@@ -94,7 +94,7 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
                     $false
                 }
                 $i += 30
-            } until ( $Unl -eq $true -or $i -eq 600 )
+            } until ( $Unl -eq $true -or $i -ge 600 )
             if ($Unl -eq $true) {
                 $Obj = if ($File -match '\.csv$') {
                     try { ipcsv $File } catch {}
