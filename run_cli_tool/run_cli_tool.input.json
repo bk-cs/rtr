@@ -10,6 +10,12 @@
     },
     "Delete": {
       "type": "boolean"
+    },
+    "Cloud": {
+      "type": "string"
+    },
+    "Token": {
+      "type": "string"
     }
   },
   "required": [
