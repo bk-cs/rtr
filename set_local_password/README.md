@@ -23,11 +23,11 @@ Humio ingest token
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="set_local_password" -CommandLine=```'{"Username":"IEUser","Password":"hunter2","ForceLogOff":true,"Log":true}'```
+runscript -CloudFile="set_local_password" -CommandLine=```'{"Username":"IEUser","Password":"hunter2","ForceLogOff":true,"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
 ```
 ### PSFALCON
 ```
-PS>$CommandLine = '```' + "'$(@{ Username = 'IEUser'; Password = 'hunter2'; ForceLogoff = $true; Log = $true } | ConvertTo-Json -Compress)'" + '```'
+PS>$CommandLine = '```' + "'$(@{ Username = 'IEUser'; Password = 'hunter2'; ForceLogoff = $true; Cloud = "https://cloud.community.humio.com"; Token = "my_token" } | ConvertTo-Json -Compress)'" + '```'
 PS>Invoke-FalconRtr runscript "-CloudFile='set_local_password' -CommandLine=$CommandLine" -HostIds <id>, <id>
 ```
 ### FALCONPY
