@@ -1,5 +1,5 @@
 ## DESCRIPTION
-Run a CLI-based tool that produces Json and capture the output
+Run a CLI-based tool and save the output in a text file in the temporary RTR directory
 
 ## PARAMETER File
 Path to the file
@@ -8,7 +8,7 @@ Path to the file
 Arguments to supply during execution
 
 ## PARAMETER Delete
-Delete the file when complete
+Delete the tool when complete
 
 ## EXAMPLES
 
