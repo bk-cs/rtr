@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
-    "Json" : {
+    "File" : {
       "type": "string",
       "format": "localFilePath"
     },
@@ -16,7 +16,7 @@
     }
   },
   "required": [
-    "Json",
+    "File",
     "Sent",
     "Deleted",
     "Status"

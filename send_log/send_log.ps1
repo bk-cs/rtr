@@ -20,97 +20,178 @@ public static extern uint QueryDosDevice(
     }
 }
 function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
-    $Inv = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
-        Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
     [array] $Wait = @()
     foreach ($Obj in $Arr) {
         try { $Str = [System.IO.File]::Open($Obj,'Open','Write'); $Str.Close(); $Str.Dispose() }
         catch { $Wait += $Obj }
     }
-    $Out = $Arr | ? { $Wait -notcontains $_ } | % {
-        $Imp = try { gc $_ | ConvertFrom-Json } catch {}
-        if (!$Imp) {
-            @{ Json = $_; Sent = $false; Deleted = $false; Status = 'parse_failure' }
-        } else {
-            $Req = $Imp | % { iwr @Inv -Body (ConvertTo-Json @($_) -Depth 8 -Compress) -UseBasicParsing }
-            if ($Req.StatusCode -ne 200) {
-                @{ Json = $_; Sent = $false; Deleted = $false; Status = 'send_failure' }
+    $Out = foreach ($File in ($Arr | ? { $Wait -notcontains $_ })) {
+        $Iwr = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
+            Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
+        $Obj = if ($File -match '\.csv$') {
+            try { ipcsv $File } catch {}
+        } elseif ($File -match '\.json$') {
+            try { gc $File | ConvertFrom-Json } catch {}
+        } elseif ($File -match '\.(log|txt)$') {
+            try { (gc $File).Normalize() } catch {}
+        }
+        $Res = [PSCustomObject] @{ File = $File; Sent = $false; Deleted = $false; Status = $null }
+        $Req = if ($Obj -is [PSCustomObject] -and $Obj.tags -and $Obj.events) {
+            iwr @Iwr -Body (ConvertTo-Json @($Obj) -Depth 8 -Compress) -UseBasicParsing
+        } elseif ($Obj) {
+            $A = @{ script = 'send_log.ps1'; file = $File }
+            $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{1' +
+                '6e0423f-7058-48c9-a204-725362b67639}\Default') 2>$null
+            if ($R) {
+                $A['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+                $A['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            }
+            if ($Obj -is [string] -and ($Obj | measure).Count -eq 1) {
+                $E = @{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $Obj }
+                $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E) }
+                iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
             } else {
-                rm $_
-                if ((Test-Path $_ -PathType Leaf) -eq $false) {
-                    @{ Json = $_; Sent = $true; Deleted = $true; Status = 'OK' }
+                $E = if ($Obj -is [PSCustomObject]) {
+                    $Obj | % {
+                        $C = $A.Clone()
+                        $_.PSObject.Properties | % { $C[$_.Name]=$_.Value }
+                        ,@{ timestamp = Get-Date -Format o; attributes = $C }
+                    }
                 } else {
-                    @{ Json = $_; Sent = $true; Deleted = $false; Status = 'delete_failure' }
+                    $Obj | % {
+                        ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $_ }
+                    }
+                }
+                for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
+                    $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E[$i..($i + 199)]) }
+                    iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
                 }
             }
+        } else {
+            $Res.Status = 'failed_to_parse'
         }
+        if ($Req) {
+            $Res.Status = $Req.StatusCode | sort -Unique
+            if ($Res.Status -eq 200) {
+                $Res.Sent = $true
+                rm $File
+                if ((Test-Path $File) -eq $false) {
+                    $Res.Deleted = $true
+                } else {
+                    $Res.Deleted = $false
+                }
+            }
+        } else {
+            $Res.Status = 'failed_to_send'
+        }
+        $Res
     }
     if ($Wait) {
         [scriptblock] $Scr = {
-            param([string] $Cloud, [string] $Token, [array] $Arr)
-            $Inv = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
+            param([string] $Cloud, [string] $Token, [string] $File)
+            $File = $File | ConvertFrom-Json
+            $Iwr = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
                 Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
-            foreach ($File in $Arr) {
-                $i = 0
-                do {
-                    $Unl = try {
-                        sleep 30
-                        $Str = [System.IO.File]::Open($File,'Open','Write'); $Str.Close(); $Str.Dispose()
-                        $true
-                    } catch {
-                        $false
+            $i = 0
+            do {
+                $Unl = try {
+                    sleep 30
+                    $Str = [System.IO.File]::Open($File,'Open','Write'); $Str.Close(); $Str.Dispose()
+                    $true
+                } catch {
+                    $false
+                }
+                $i += 30
+            } until ( $Unl -eq $true -or $i -eq 600 )
+            if ($Unl -eq $true) {
+                $Obj = if ($File -match '\.csv$') {
+                    try { ipcsv $File } catch {}
+                } elseif ($File -match '\.json$') {
+                    try { gc $File | ConvertFrom-Json } catch {}
+                } elseif ($File -match '\.(log|txt)$') {
+                    try { (gc $File).Normalize() } catch {}
+                }
+                $Req = if ($Obj -is [PSCustomObject] -and $Obj.tags -and $Obj.events) {
+                    iwr @Iwr -Body (ConvertTo-Json @($Obj) -Depth 8 -Compress) -UseBasicParsing
+                } elseif ($Obj) {
+                    $A = @{ script = 'send_log.ps1'; file = $File }
+                    $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d' +
+                        '}\{16e0423f-7058-48c9-a204-725362b67639}\Default') 2>$null
+                    if ($R) {
+                        $A['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+                        $A['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
                     }
-                    $i += 30
-                } until ( $Unl -eq $true -or $i -eq 600 )
-                if ($Unl -eq $true) {
-                    try {
-                        $Imp = try { gc $File | ConvertFrom-Json } catch {}
-                        if ($Imp) {
-                            $Imp | % { iwr @Inv -Body (ConvertTo-Json @($_) -Depth 8 -Compress) -UseBasicParsing }
+                    $E = if ($Obj -is [PSCustomObject]) {
+                        $Obj | % {
+                            $C = $A.Clone()
+                            $_.PSObject.Properties | % { $C[$_.Name]=$_.Value }
+                            ,@{ timestamp = Get-Date -Format o; attributes = $C }
                         }
-                    } catch {}
+                    } else {
+                        if (($Obj | measure).Count -eq 1) {
+                            ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $Obj }
+                        } elseif (($Obj | measure).Count -gt 1) {
+                            $Obj | ? { -not [string]::IsNullOrEmpty($_) } | % {
+                                ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $_ }
+                            }
+                        }
+                    }
+                    for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
+                        $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E[$i..($i + 199)]) }
+                        iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
+                    }
                 }
             }
         }
-        $Sta = @{ FilePath = 'powershell.exe'; ArgumentList = "-Command &{$Scr} '$Cloud' '$Token' '$(
-            $Wait -join ', ')'"; PassThru = $true }
-        $Out += start @Sta | % {
-            $Wait | % { @{ Json = $_; Sent = $false; Deleted = $false; Status = 'waiting_to_access' }}
+        foreach ($File in $Wait) {
+            $ArgList = @('-Command &{', $Scr, '}', $Cloud, $Token, ($File | ConvertTo-Json)) -join ' '
+            $Out += start powershell.exe $ArgList -PassThru | % {
+                @{ File = $File; Sent = $false; Deleted = $false; Status = 'waiting_to_access' }
+            }
         }
     }
     $Out | ConvertTo-Json -Compress
 }
-$Param = if ($args[0]) { $args[0] | ConvertFrom-Json }
-@('Cloud','Token').foreach{
-    if (!$Param.$_) {
-        throw "Missing required parameter '$_'."
-    } elseif ($_ -eq 'Cloud') {
-        if ($Param.$_ -notmatch 'https://cloud(.(community|us))?.humio.com') {
-            throw "'$($Param.$_)' is not a valid Humio cloud value."
-        } elseif ($Param.$_ -notmatch '/$') {
-            $Param.$_ += '/'
+function parse ([string] $String) {
+    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+    switch ($Param) {
+        { $_.File } {
+            $_.File = validate $_.File
+            if ((Test-Path $_.File -PathType Leaf) -eq $false) {
+                throw "Cannot find path '$($_.File)' because it does not exist or is not a file."
+            }
         }
-    } elseif ($_ -eq 'Token' -and $Param.$_ -notmatch '^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$') {
-        throw "'$($Param.$_)' is not a valid ingest token."
+        { -not $_.File } {
+            $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
+            [array] $Arr = @('*.csv','*.json','*.log','*.txt').foreach{ (gci $Rtr $_ -File -EA 0).FullName } |
+                sort -Unique
+            if ($Arr) {
+                $_.PSObject.Properties.Add((New-Object PSNoteProperty('File',$Arr)))
+            } else {
+                throw "No file specified and no compatible files found in '$Rtr'."
+            }
+        }
+        { $_.Cloud -and $_.Cloud -notmatch '/$' } {
+            $_.Cloud += '/'
+        }
+        { ($_.Cloud -and -not $_.Token) -or ($_.Token -and -not $_.Cloud) } {
+            throw "Both 'Cloud' and 'Token' are required when sending results to Humio."
+        }
+        { $_.Cloud -and $_.Cloud -notmatch '^https://cloud(.(community|us))?.humio.com/$' } {
+            throw "'$($_.Cloud)' is not a valid Humio cloud value."
+        }
+        { $_.Token -and $_.Token -notmatch '^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$' } {
+            throw "'$($_.Token)' is not a valid Humio ingest token."
+        }
+        { $_.Cloud -and $_.Token -and [Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12' } {
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            } catch {
+                throw $_
+            }
+        }
     }
+    $Param
 }
-if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-}
-[array] $Arr = if ($Param.Json) {
-    $Param.Json | % { validate $_ }
-} else {
-    $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-    (gci $Rtr -Filter *.json -File -EA 0).FullName
-}
-if (-not $Arr) {
-    throw 'No Json files found.'
-}
-$Arr | ? { ![string]::IsNullOrEmpty($_) } | % {
-    if ((Test-Path $_ -PathType Leaf) -eq $false) {
-        throw "Cannot find path '$_' because it does not exist."
-    } elseif ($_ -notmatch '\.json$') {
-        throw "'$_' is not a Json file."
-    }
-}
-shumio $Param.Cloud $Param.Token $Arr
+$Param = if ($args[0]) { parse $args[0] }
+shumio $Param.Cloud $Param.Token $Param.File
