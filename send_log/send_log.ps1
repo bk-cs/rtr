@@ -20,12 +20,13 @@ public static extern uint QueryDosDevice(
     }
 }
 function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
-    [array] $Wait = @()
-    foreach ($Obj in $Arr) {
-        try { $Str = [System.IO.File]::Open($Obj,'Open','Write'); $Str.Close(); $Str.Dispose() }
-        catch { $Wait += $Obj }
+    [System.Collections.ArrayList] $Wait = @()
+    [System.Collections.ArrayList] $Out = @()
+    foreach ($File in $Arr) {
+        try { $Open = [System.IO.File]::Open($File,'Open','Write'); $Open.Close(); $Open.Dispose() }
+        catch { [void] $Wait.Add($File) }
     }
-    $Out = foreach ($File in ($Arr | ? { $Wait -notcontains $_ })) {
+    foreach ($File in ($Arr | ? { $Wait -notcontains $_ })) {
         $Iwr = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
             Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
         $Obj = if ($File -match '\.csv$') {
@@ -35,13 +36,13 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
         } elseif ($File -match '\.(log|txt)$') {
             try { (gc $File).Normalize() } catch {}
         }
-        $Res = [PSCustomObject] @{ File = $File; Sent = $false; Deleted = $false; Status = $null }
+        $Res = [PSCustomObject] @{ File = $File; Sent = $false; Deleted = $false; Status = '' }
         $Req = if ($Obj -is [PSCustomObject] -and $Obj.tags -and $Obj.events) {
             iwr @Iwr -Body (ConvertTo-Json @($Obj) -Depth 8 -Compress) -UseBasicParsing
         } elseif ($Obj) {
             $A = @{ script = 'send_log.ps1'; file = $File }
-            $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{1' +
-                '6e0423f-7058-48c9-a204-725362b67639}\Default') 2>$null
+            $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e04' +
+                '23f-7058-48c9-a204-725362b67639}\Default') 2>$null
             if ($R) {
                 $A['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
                 $A['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
@@ -53,14 +54,11 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
             } else {
                 $E = if ($Obj -is [PSCustomObject]) {
                     $Obj | % {
-                        $C = $A.Clone()
-                        $_.PSObject.Properties | % { $C[$_.Name]=$_.Value }
+                        $C = $A.Clone(); $_.PSObject.Properties | % { $C[$_.Name]=$_.Value }
                         ,@{ timestamp = Get-Date -Format o; attributes = $C }
                     }
                 } else {
-                    $Obj | % {
-                        ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $_ }
-                    }
+                    $Obj | % { ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $_ }}
                 }
                 for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
                     $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E[$i..($i + 199)]) }
@@ -68,35 +66,29 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
                 }
             }
         } else {
-            $Res.Status = 'failed_to_parse'
+            $Res.Status = 'failed_to_ingest'
         }
         if ($Req) {
-            $Res.Status = $Req.StatusCode | sort -Unique
+            $Res.Status = ($Req.StatusCode | sort -Unique) -join ', '
             if ($Res.Status -eq 200) {
-                $Res.Sent = $true
-                rm $File
-                if ((Test-Path $File) -eq $false) {
-                    $Res.Deleted = $true
-                } else {
-                    $Res.Deleted = $false
-                }
+                $Res.Sent = $true; rm $File
+                $Res.Deleted = if ((Test-Path $File) -eq $false) { $true } else { $false }
             }
         } else {
             $Res.Status = 'failed_to_send'
         }
-        $Res
+        [void] $Out.Add($Res)
     }
     if ($Wait) {
         [scriptblock] $Scr = {
             param([string] $Cloud, [string] $Token, [string] $File)
-            $File = $File | ConvertFrom-Json
             $Iwr = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post'; Headers = @{
                 Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
             $i = 0
             do {
                 $Unl = try {
                     sleep 30
-                    $Str = [System.IO.File]::Open($File,'Open','Write'); $Str.Close(); $Str.Dispose()
+                    $Open = [System.IO.File]::Open($File,'Open','Write'); $Open.Close(); $Open.Dispose()
                     $true
                 } catch {
                     $false
@@ -141,12 +133,15 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
                         iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
                     }
                 }
+                if ($Req -and (($Req.StatusCode | sort -Unique) -join ', ') -eq 200) { rm $File }
             }
         }
         foreach ($File in $Wait) {
-            $ArgList = @('-Command &{', $Scr, '}', $Cloud, $Token, ($File | ConvertTo-Json)) -join ' '
-            $Out += start powershell.exe $ArgList -PassThru | % {
-                @{ File = $File; Sent = $false; Deleted = $false; Status = 'waiting_to_access' }
+            $ArgList = @('-Command &{', $Scr, '}', $Cloud, $Token, ('"' + $File + '"')) -join ' '
+            start powershell.exe $ArgList -PassThru | % {
+                $Res = [PSCustomObject] @{ File = $File; Sent = $false; Deleted = $false;
+                    Status = 'waiting_to_access' }
+                [void] $Out.Add($Res)
             }
         }
     }
