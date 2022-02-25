@@ -1,9 +1,6 @@
 ## DESCRIPTION
 Change the password for a local user
 
-## PLATFORMS
-Windows
-
 ## PARAMETER Username
 Local username (Required)
 
