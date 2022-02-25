@@ -1,5 +1,5 @@
 ## DESCRIPTION
-List local volume(s)
+List local disk volume(s)
 
 ## PARAMETER Cloud
 Humio cloud base URL
