@@ -7,6 +7,7 @@
         $Iwr = @{ Uri = @($Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post';
             Headers = @{ Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
         foreach ($File in $Arr) {
+            $Json = $File -replace '\.log', '.json'
             $Obj = if ($File -match '\.csv$') {
                 try { ipcsv $File } catch {}
             } elseif ($File -match '\.json$') {
@@ -14,7 +15,7 @@
             } elseif ($File -match '\.(log|txt)$') {
                 try { (gc $File).Normalize() } catch {}
             }
-            $Req = if ($Obj -is [PSCustomObject] -and $Obj.tags -and $Obj.events) {
+            $Res = if ($Obj -is [PSCustomObject] -and $Obj.tags -and $Obj.events) {
                 iwr @Iwr -Body (ConvertTo-Json @($Obj) -Depth 8 -Compress) -UseBasicParsing
             } elseif ($Obj) {
                 $A = @{ script = 'run_cli_tool.ps1'; file = $File }
@@ -41,12 +42,22 @@
                 }
                 for ($i = 0; $i -lt ($E | measure).Count; $i += 200) {
                     $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @(@($E)[$i..($i + 199)]) }
-                    iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
+                    $Req = iwr @Iwr -Body (ConvertTo-Json @($B) -Depth 8 -Compress) -UseBasicParsing
+                    if (-not $Req -or $Req.StatusCode -ne 200) {
+                        ConvertTo-Json @($B) -Depth 8 -Compress >> $Json
+                    }
+                    $Req
                 }
             } else {
                 if ((Test-Path $File -PathType Leaf) -eq $true -and -not (Get-Content $File)) { rm $File }
             }
-            if ($Req -and (($Req.StatusCode | sort -Unique) -join ', ') -eq 200) { rm $File }
+            if ($Res -and (($Res.StatusCode | sort -Unique) -join ', ') -eq 200) {
+                rm $File
+            } elseif ((Test-Path $Json -PathType Leaf) -eq $true) {
+                if (($Obj | measure).Count -eq ((gc $Json | ConvertFrom-Json).events | measure).Count) {
+                    rm $File
+                }
+            }
         }
     }
 }
@@ -115,7 +126,8 @@ if ($Param.ArgumentList) { $Start['ArgumentList'] = $Param.ArgumentList }
 start @Start -PassThru | % {
     $_.PSObject.Properties.Add((New-Object PSNoteProperty('Output',$Rtr)))
     if ($Param.Delete -eq $true -or ($Param.Cloud -and $Param.Token)) {
-        $ArgList = @('-Command &{', $Shumio, '}', $_.Id, $Param.Delete) -join ' '
+        $Delete = if ($Param.Delete -eq $true) { '$true' } else { '$false' }
+        $ArgList = @('-Command &{', $Shumio, '}', $_.Id, $Delete) -join ' '
         if ($Param.Cloud -and $Param.Token) {
             $ArgList = @($ArgList, $OutLog, $ErrLog, $Param.Cloud, $Param.Token) -join ' '
         }
