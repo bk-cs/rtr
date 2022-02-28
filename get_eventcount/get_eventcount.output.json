@@ -1,42 +1,16 @@
 ﻿{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
-    "Id": {
+    "RecordCount": {
       "type": "integer"
     },
-    "Name": {
+    "LogName": {
       "type": "string"
-    },
-    "StartTime": {
-      "type": "integer",
-      "format": "date-time"
-    },
-    "WorkingSet": {
-      "type": "integer"
-    },
-    "CPU": {
-      "type": "integer"
-    },
-    "HandleCount": {
-      "type": "integer"
-    },
-    "Path": {
-      "type": "string"
-    },
-    "Sha256": {
-      "type": "integer",
-      "format": "sha256"
     }
   },
   "required": [
-    "Id",
-    "Name",
-    "StartTime",
-    "WorkingSet",
-    "CPU",
-    "HandleCount",
-    "Path",
-    "Sha256"
+    "RecordCount",
+    "LogName"
   ],
   "type": "object"
 }
