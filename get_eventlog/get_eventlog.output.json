@@ -1,0 +1,25 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "TimeCreated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ProviderName": {
+      "type": "string"
+    },
+    "Id": {
+      "type": "integer"
+    },
+    "Message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "TimeCreated",
+    "ProviderName",
+    "Id",
+    "Message"
+  ],
+  "type": "object"
+}
