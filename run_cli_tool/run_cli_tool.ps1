@@ -1,3 +1,4 @@
+$Default = @{ Cloud = ''; Token = '' }
 [scriptblock] $Shumio = {
     param([int] $Id, [string] $Delete, [string] $OutLog, [string] $ErrLog, [string] $Cloud, [string] $Token)
     $Run = (ps -Id $Id).Path; Wait-Process $Id
@@ -61,8 +62,19 @@
         }
     }
 }
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { -not $_.File } {
             throw "Missing required parameter 'File'."
@@ -116,7 +128,7 @@ public static extern uint QueryDosDevice(
         else { $Str }
     }
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
 if ((Test-Path $Rtr) -eq $false) { ni $Rtr -ItemType Directory }
 $OutLog = Join-Path $Rtr "run_cli_tool_$((Get-Date).ToFileTimeUtc()).stdout.log"

@@ -1,3 +1,4 @@
+$Default = @{ Cloud = ''; Token = '' }
 function hash ([object] $Obj, [string] $Str) {
     foreach ($I in $Obj) {
         $E = ($Obj | ? { $_.$Str -eq $I.$Str } | select -Unique).Sha256
@@ -35,8 +36,19 @@ function output ([object] $Obj, [object] $Param, [string] $Script) {
     }
     $Obj | ConvertTo-Json -Depth 8 -Compress
 }
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { $_.Cloud -and $_.Cloud -notmatch '/$' } {
             $_.Cloud += '/'
@@ -60,7 +72,7 @@ function parse ([string] $String) {
     }
     $Param
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 $Sel = @('Id', 'Name', 'StartTime', 'WorkingSet', 'CPU', 'HandleCount', 'Path')
 $Out = ps -EA 0 | select $Sel | % {
     $_.PSObject.Properties | % {

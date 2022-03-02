@@ -1,3 +1,4 @@
+$Default = @{ Cloud = ''; Token = ''; Hostname = ''; ClientId = ''; ClientSecret = ''; MemberCid = '' }
 function falcon ([object] $Obj) {
     if (!$Obj.Method) { $Obj['Method'] = 'GET' }
     if (!$Obj.Headers) { $Obj['Headers'] = @{ Accept = 'application/json' }}
@@ -94,8 +95,19 @@ public static extern uint QueryDosDevice(
         else { $Str }
     }
 }
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { -not $_.File } {
             throw "Missing required parameter 'File'."
@@ -143,7 +155,7 @@ function parse ([string] $String) {
     }
     $Param
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 $Falcon = @{
     ApiClient = "client_id=$($Param.ClientId)&client_secret=$($Param.ClientSecret)"
     WebClient = New-Object System.Net.WebClient

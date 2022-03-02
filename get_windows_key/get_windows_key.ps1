@@ -1,3 +1,4 @@
+$Default = @{ Cloud = ''; Token = '' }
 function output ([object] $Obj, [object] $Param, [string] $Script) {
     if ($Obj -and $Param.Cloud -and $Param.Token) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
@@ -27,8 +28,19 @@ function output ([object] $Obj, [object] $Param, [string] $Script) {
     }
     $Obj | ConvertTo-Json -Depth 8 -Compress
 }
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { $_.Cloud -and $_.Cloud -notmatch '/$' } {
             $_.Cloud += '/'
@@ -52,6 +64,6 @@ function parse ([string] $String) {
     }
     $Param
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 $Out = [PSCustomObject] @{ OA3xOriginalProductKey = (gwmi -Class SoftwareLicensingService).OA3xOriginalProductKey }
 output $Out $Param "get_windows_key.ps1"

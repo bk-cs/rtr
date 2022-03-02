@@ -1,3 +1,4 @@
+$Default = @{ Cloud = ''; Token = '' }
 function output ([object] $Obj, [object] $Param, [string] $Script) {
     if ($Obj -and $Param.Cloud -and $Param.Token) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
@@ -27,8 +28,19 @@ function output ([object] $Obj, [object] $Param, [string] $Script) {
     }
     $Obj | ConvertTo-Json -Depth 8 -Compress
 }
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { -not $_.File } {
             throw "Missing required parameter 'File'."
@@ -36,7 +48,7 @@ function parse ([string] $String) {
         { $_.File } {
             $_.File = validate $_.File
             if ((Test-Path $_.File -PathType Leaf) -eq $false) {
-                throw "Cannot find path '$File' because it does not exist or is not a file."
+                throw "Cannot find path '$($_.File)' because it does not exist or is not a file."
             }
         }
         { $_.Cloud -and $_.Cloud -notmatch '/$' } {
@@ -82,7 +94,7 @@ public static extern uint QueryDosDevice(
         else { $Str }
     }
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 $Sel = @('OriginalFilename', 'FileDescription', 'ProductName', 'CompanyName', 'FileName', 'FileVersion')
 $Out = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($Param.File) | select $Sel | % {
     $_.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',(Get-FileHash $_.FileName).Hash.ToLower())))

@@ -1,3 +1,4 @@
+$Default = @{ Cloud = ''; Token = '' }
 function validate ([string] $Str) {
     if (![string]::IsNullOrEmpty($Str)) {
         if ($Str -match 'HarddiskVolume\d+\\') {
@@ -147,8 +148,19 @@ function shumio ([string] $Cloud, [string] $Token, [array] $Arr) {
     }
     $Out | ConvertTo-Json -Compress
 }
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { $_.File } {
             $_.File = validate $_.File
@@ -188,5 +200,5 @@ function parse ([string] $String) {
     }
     $Param
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 shumio $Param.Cloud $Param.Token $Param.File

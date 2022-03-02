@@ -1,5 +1,17 @@
-function parse ([string] $String) {
-    $Param = try { $String | ConvertFrom-Json } catch { throw $_ }
+$Default = @{ Cloud = ''; Token = '' }
+function parse ([object] $Default, [string] $JsonInput) {
+    $Param = if ($JsonInput) {
+        try { $JsonInput | ConvertFrom-Json } catch { throw $_ }
+    } else {
+        [PSCustomObject] @{}
+    }
+    if ($Default) {
+        $Default.GetEnumerator().foreach{
+            if ($_.Value -and -not $Param.($_.Key)) {
+                $Param.PSObject.Properties.Add((New-Object PSNoteProperty($_.Key, $_.Value)))
+            }
+        }
+    }
     switch ($Param) {
         { -not $_.Path } {
             throw "Missing required parameter 'Path'."
@@ -105,7 +117,7 @@ public static extern uint QueryDosDevice(
     $Out = hash $Out FullName
     output $Out 'find_file.ps1' $Cloud $Token
 }
-$Param = if ($args[0]) { parse $args[0] }
+$Param = parse $Default $args[0]
 $Inputs = @($Param.PSObject.Properties.foreach{ "-$($_.Name) '$($_.Value)'" }) -join ' '
 $Start = @{ FilePath = 'powershell.exe'; ArgumentList = "-Command &{$Script} $Inputs" }
 start @Start -PassThru | select Id, ProcessName | % {
