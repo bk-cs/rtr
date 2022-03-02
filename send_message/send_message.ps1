@@ -105,4 +105,4 @@ $Out = ps -IncludeUserName | ? { $_.SessionId -ne 0 } | select SessionId, UserNa
     }
     [PSCustomObject] @{ Username = $_.UserName; Message  = if ($Result -eq 1) { $Param.Message } else { $Result }}
 }
-output $Out $Param "send_message_$((Get-Date).ToFileTimeUtc()).json"
+output $Out $Param "send_message.ps1"
