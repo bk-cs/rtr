@@ -26,10 +26,7 @@
     }
   },
   "required": [
-    "File",
-    "Hostname",
-    "ClientId",
-    "ClientSecret"
+    "File"
   ],
   "type": "object"
 }
