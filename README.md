@@ -4,7 +4,7 @@ Scripts and schema for use with CrowdStrike Falcon Real-time Response and Falcon
 ## Frequently Asked Questions
 
 ### Uh, what's wrong with your code?
-These scripts are not regular PowerShell/bash/zsh scripts, and they've been designed to work with
+These scripts are not regular PowerShell/bash/zsh scripts. They've been designed to work with
 Falcon Workflows \[ [US-1](https://falcon.crowdstrike.com/documentation/196/workflows) | [US-2](https://falcon.us-2.crowdstrike.com/documentation/196/workflows) | [US-GOV-1](https://falcon.laggar.gcw.crowdstrike.com/documentation/196/workflows) | [EU-1](https://falcon.eu-1.crowdstrike.com/documentation/196/workflows) \].
 
 The included Json input and output schema define what parameters can be automatically populated during a workflow,
