@@ -130,7 +130,7 @@ public static extern uint QueryDosDevice(
 }
 $Param = parse $Default $args[0]
 $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-if ((Test-Path $Rtr) -eq $false) { ni $Rtr -ItemType Directory }
+if ((Test-Path $Rtr) -eq $false) { [void] (ni $Rtr -ItemType Directory) }
 $OutLog = Join-Path $Rtr "run_cli_tool_$((Get-Date).ToFileTimeUtc()).stdout.log"
 $ErrLog = Join-Path $Rtr "run_cli_tool_$((Get-Date).ToFileTimeUtc()).stderr.log"
 $Start = @{ FilePath = $Param.File; RedirectStandardOutput = $OutLog; RedirectStandardError = $ErrLog }
