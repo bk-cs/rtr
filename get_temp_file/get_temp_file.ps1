@@ -18,7 +18,7 @@ $Default = @{ Cloud = ''; Token = '' }
                 Headers = @{ Authorization = @('Bearer', $Token) -join ' '; ContentType = 'application/json' }}
         }
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { [void] (ni $Rtr -ItemType Directory) }
         $Json = $Script -replace '\.ps1', ('_' + [string] (Get-Date).ToFileTimeUtc() + '.json')
         $A = @{ script = $Script; host = [System.Net.Dns]::GetHostName() }
         $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +

@@ -21,7 +21,7 @@ function grk ([string] $Str) {
 function output ([object] $Obj, [object] $Param, [string] $Script) {
     if ($Obj -and $Param.Cloud -and $Param.Token) {
         $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-        if ((Test-Path $Rtr -PathType Container) -eq $false) { ni $Rtr -ItemType Directory }
+        if ((Test-Path $Rtr -PathType Container) -eq $false) { [void] (ni $Rtr -ItemType Directory) }
         $Json = $Script -replace '\.ps1', "_$((Get-Date).ToFileTimeUtc()).json"
         $Iwr = @{ Uri = @($Param.Cloud, 'api/v1/ingest/humio-structured/') -join $null; Method = 'post';
             Headers = @{ Authorization = @('Bearer', $Param.Token) -join ' '; ContentType = 'application/json' }}
