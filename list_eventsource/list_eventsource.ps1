@@ -46,5 +46,5 @@ function sendlist ([object]$Obj,[object]$Humio,[string]$Script) {
     }
 }
 $Out = Get-WinEvent -ListLog * | Where-Object { $_.RecordCount } | Select-Object RecordCount,LogName
-sendlist $Out $Humio 'get_eventcount.ps1'
+sendlist $Out $Humio 'list_eventsource.ps1'
 $Out | ConvertTo-Json -Compress
