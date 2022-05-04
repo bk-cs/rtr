@@ -5,10 +5,10 @@ List BIOS information
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="list_bios"
+runscript -CloudFile="get_bios"
 ```
 ### PSFALCON
 ```powershell
-PS>Invoke-FalconRtr runscript "-CloudFile='list_bios' -CommandLine=$CommandLine" -HostId <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='get_bios' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY

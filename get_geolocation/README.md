@@ -5,10 +5,10 @@ Use ip-api.com to perform a geolocation request
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="list_geolocation"
+runscript -CloudFile="get_geolocation"
 ```
 ### PSFALCON
 ```powershell
-PS>Invoke-FalconRtr runscript "-CloudFile='list_geolocation' -CommandLine=$CommandLine" -HostId <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='get_geolocation' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY
