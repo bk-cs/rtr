@@ -4,7 +4,7 @@ switch ($Humio) {
     { ($_.Cloud -and !$_.Token) -or ($_.Token -and !$_.Cloud) } {
         throw "Both 'Cloud' and 'Token' are required when sending results to Humio."
     }
-    { $_.Cloud -and $_.Cloud -notmatch '^https://cloud(.(community|us))Where-Object.humio.com/$' } {
+    { $_.Cloud -and $_.Cloud -notmatch '^https://cloud(.(community|us))?.humio.com/$' } {
         throw "'$($_.Cloud)' is not a valid Humio cloud value."
     }
     { $_.Token -and $_.Token -notmatch '^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$' } {
