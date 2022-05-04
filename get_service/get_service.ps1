@@ -53,13 +53,10 @@ function sendobj ([object]$Obj,[object]$Humio,[string]$Script) {
     }
 }
 $Param = parse $args[0]
-$Out = try {
-    @(Get-Service $Param.Name -EA 0 | Select-Object Name,DisplayName,Status).foreach{
-        if ($_.Status) { $_.Status = $_.Status.ToString() }
-        $_
-    }
-} catch {
-    throw "No service found matching '$($Param.Name)'."
+$Out = @(Get-Service $Param.Name -EA 0 | Select-Object Name,DisplayName,Status).foreach{
+    if ($_.Status) { $_.Status = $_.Status.ToString() }
+    $_
 }
+if (!$Out) { throw "No service found matching '$($Param.Name)'." }
 sendobj $Out $Humio 'get_service.ps1'
 $Out | ConvertTo-Json -Compress
