@@ -43,7 +43,7 @@
       "type": "string"
     },
     "ZoneId": {
-      "type": "integer"
+      "type": "string"
     },
     "HostUrl": {
       "type": "string",
