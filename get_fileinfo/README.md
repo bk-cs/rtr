@@ -1,5 +1,5 @@
 ## DESCRIPTION
-Check for a file and return file information
+Check for a file and return information about it
 
 ## PARAMETER File
 Path of the file (Required)
