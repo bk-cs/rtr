@@ -9,6 +9,6 @@ runscript -CloudFile="get_current_user"
 ```
 ### PSFALCON
 ```powershell
-PS>Invoke-FalconRtr runscript "-CloudFile='get_current_user' -CommandLine=$CommandLine" -HostId <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='get_current_user'" -HostId <id>, <id>
 ```
 ### FALCONPY

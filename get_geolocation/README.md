@@ -9,6 +9,6 @@ runscript -CloudFile="get_geolocation"
 ```
 ### PSFALCON
 ```powershell
-PS>Invoke-FalconRtr runscript "-CloudFile='get_geolocation' -CommandLine=$CommandLine" -HostId <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='get_geolocation'" -HostId <id>, <id>
 ```
 ### FALCONPY
