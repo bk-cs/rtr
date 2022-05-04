@@ -80,10 +80,27 @@ public static extern uint QueryDosDevice(
     }
 }
 $Param = parse $args[0]
-$Out = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($Param.File) | Select-Object OriginalFilename,
-FileDescription,ProductName,CompanyName,FileName,FileVersion | ForEach-Object {
-    $_.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',(Get-FileHash $_.FileName).Hash.ToLower())))
-    $_
+$Out = foreach ($i in (Get-ChildItem $Param.File | Select-Object Length,CreationTime,LastWriteTime,LastAccessTime,
+Mode,VersionInfo)) {
+    foreach ($T in @('CreationTime','LastWriteTime','LastAccessTime')) {
+        if ($i.$T) { $i.$T = $i.$T.ToFileTimeUtc() }
+    }
+    foreach ($P in ($i.VersionInfo | Select-Object OriginalFilename,FileDescription,ProductName,CompanyName,
+    FileName,FileVersion)) {
+        @($P.PSObject.Properties).Where({ $_.Value }).foreach{
+            $i.PSObject.Properties.Add((New-Object PSNoteProperty($_.Name,$_.Value)))
+        }
+    }
+    $i.PSObject.Properties.Remove('VersionInfo')
+    if ($i.FileName) {
+        @(Get-Content $i.FileName -Stream Zone.Identifier -EA 0 | Select-String -Pattern '=').Where({ $_ -match
+        '(ZoneId|HostUrl)' }).foreach{
+            [string[]]$A = $_ -split '='
+            $i.PSObject.Properties.Add((New-Object PSNoteProperty($A[0],$A[1])))
+        }
+        $i.PSObject.Properties.Add((New-Object PSNoteProperty('Sha256',(Get-FileHash $i.FileName).Hash.ToLower())))
+    }
+    $i
 }
-sendobj $Out $Humio 'get_fileversion.ps1'
+sendobj $Out $Humio 'get_fileinfo.ps1'
 $Out | ConvertTo-Json -Compress

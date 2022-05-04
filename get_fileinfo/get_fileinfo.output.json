@@ -1,0 +1,62 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "OriginalFilename": {
+      "type": "string"
+    },
+    "FileDescription": {
+      "type": "string"
+    },
+    "ProductName": {
+      "type": "string"
+    },
+    "CompanyName": {
+      "type": "string"
+    },
+    "FileName": {
+      "type": "string",
+      "format": "localFilePath"
+    },
+    "FileVersion": {
+      "type": "string"
+    },
+    "Sha256": {
+      "type": "string",
+      "format": "sha256"
+    },
+    "Length": {
+      "type": "integer"
+    },
+    "CreationTime": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "LastWriteTime": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "LastAccessTime": {
+      "type": "integer",
+      "format": "date-time"
+    },
+    "Mode": {
+      "type": "string"
+    },
+    "ZoneId": {
+      "type": "integer"
+    },
+    "HostUrl": {
+      "type": "string",
+      "format": "url"
+    }
+  },
+  "required": [
+    "Length",
+    "CreationTime",
+    "Mode",
+    "FileName",
+    "Sha256"
+  ],
+  "type":"object"
+}
+
