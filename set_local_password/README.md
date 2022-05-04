@@ -10,21 +10,15 @@ Password (Required)
 ## PARAMETER ForceLogoff
 Force logoff if the user has an active session
 
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
-
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="set_local_password" -CommandLine=```'{"Username":"IEUser","Password":"hunter2","ForceLogOff":true,"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="set_local_password" -CommandLine=```'{"Username":"IEUser","Password":"hunter2","ForceLogOff":true}'```
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ Username = 'IEUser'; Password = 'hunter2'; ForceLogoff = $true; Cloud = "https://cloud.community.humio.com"; Token = "my_token" } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='set_local_password' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>$CommandLine = '```' + "'$(@{ Username = 'IEUser'; Password = 'hunter2'; ForceLogoff = $true } | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='set_local_password' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY

@@ -1,21 +1,14 @@
 ## DESCRIPTION
-List the most recent reboot time
-
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
+Get the most recent boot time
 
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_last_boot" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="get_last_boot"
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='get_last_boot' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>Invoke-FalconRtr runscript "-CloudFile='get_last_boot'" -HostId <id>, <id>
 ```
 ### FALCONPY

@@ -3,12 +3,6 @@
   "properties": {
     "Message": {
       "type": "string"
-    },
-    "Cloud": {
-      "type": "string"
-    },
-    "Token": {
-      "type": "string"
     }
   },
   "required": [

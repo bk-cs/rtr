@@ -4,12 +4,6 @@ Remove 'SensorGroupingTag' values
 ## PARAMETER SensorTag
 One or more SensorTag values (Required)
 
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
-
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
@@ -17,8 +11,8 @@ Humio ingest token
 runscript -CloudFile="remove_sensortag" -CommandLine=```'{"SensorTag":["my","example","tags"]}'```
 ```
 ### PSFALCON
-```
+```powershell
 PS>$CommandLine = '```' + "'$(@{ SensorTag = @('my','example','tags') } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='remove_sensortag' -CommandLine=$CommandLine" -HostIds <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='remove_sensortag' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY

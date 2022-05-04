@@ -1,21 +1,14 @@
 ## DESCRIPTION
-List 'SensorGroupingTag' values
-
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
+Get 'SensorGroupingTag' values
 
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_sensortag" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="get_sensortag"
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='get_sensortag' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>Invoke-FalconRtr runscript "-CloudFile='get_sensortag'" -HostId <id>, <id>
 ```
 ### FALCONPY

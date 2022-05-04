@@ -1,21 +1,14 @@
 ## DESCRIPTION
-List Windows product key
-
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
+Get Windows product key
 
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_windows_key" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="get_windows_key"
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='get_windows_key' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>Invoke-FalconRtr runscript "-CloudFile='get_windows_key'" -HostId <id>, <id>
 ```
 ### FALCONPY

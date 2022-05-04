@@ -6,12 +6,6 @@
     },
     "Port": {
       "type": "integer"
-    },
-    "Cloud": {
-      "type": "string"
-    },
-    "Token": {
-      "type": "string"
     }
   },
   "type": "object"

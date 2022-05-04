@@ -4,12 +4,6 @@
     "File" : {
       "type": "string",
       "format": "localFilePath"
-    },
-    "Cloud": {
-      "type": "string"
-    },
-    "Token": {
-      "type": "string"
     }
   },
   "required": [

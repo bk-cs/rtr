@@ -3,12 +3,6 @@
   "properties": {
     "SensorTag": {
       "type": "array"
-    },
-    "Cloud": {
-      "type": "string"
-    },
-    "Token": {
-      "type": "string"
     }
   },
   "required": [

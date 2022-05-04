@@ -14,8 +14,8 @@ Destination TCP port
 runscript -CloudFile="test_tcp_connection" -CommandLine=```'{"Destination":"google.com","Port":80}'```
 ```
 ### PSFALCON
-```
+```powershell
 PS>$CommandLine = '```' + "'$(@{ Destination = 'google.com'; Port = 80 } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='test_tcp_connection' -CommandLine=$CommandLine" -HostIds <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='test_tcp_connection' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY

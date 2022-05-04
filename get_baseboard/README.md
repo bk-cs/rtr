@@ -1,21 +1,14 @@
 ## DESCRIPTION
-List motherboard information
-
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
+Get motherboard information
 
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_baseboard" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="get_baseboard"
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='get_baseboard' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>Invoke-FalconRtr runscript "-CloudFile='get_baseboard'" -HostId <id>, <id>
 ```
 ### FALCONPY

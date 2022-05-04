@@ -2,13 +2,7 @@
 Add 'SensorGroupingTag' values
 
 ## PARAMETER SensorTag
-One or more SensorTag values (Required)
-
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
+An array of one or more SensorTag values (Required)
 
 ## EXAMPLES
 
@@ -17,8 +11,8 @@ Humio ingest token
 runscript -CloudFile="add_sensortag" -CommandLine=```'{"SensorTag":["my","example","tags"]}'```
 ```
 ### PSFALCON
-```
+```powershell
 PS>$CommandLine = '```' + "'$(@{ SensorTag = @('my','example','tags') } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='add_sensortag' -CommandLine=$CommandLine" -HostIds <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='add_sensortag' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY

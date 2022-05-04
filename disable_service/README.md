@@ -4,12 +4,6 @@ Stop and disable a service
 ## PARAMETER Name
 Service name (Required)
 
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
-
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
@@ -17,8 +11,8 @@ Humio ingest token
 runscript -CloudFile="disable_service" -CommandLine=```'{"Name":"WinRM"}'```
 ```
 ### PSFALCON
-```
+```powershell
 PS>$CommandLine = '```' + "'$(@{ Name = 'WinRM' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='disable_service' -CommandLine=$CommandLine" -HostIds <id>, <id>
+PS>Invoke-FalconRtr runscript "-CloudFile='disable_service' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY

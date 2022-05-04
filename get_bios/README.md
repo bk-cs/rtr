@@ -1,21 +1,14 @@
 ## DESCRIPTION
 List BIOS information
 
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
-
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="get_bios" -CommandLine=```'{"Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="list_bios"
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='get_bios' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>Invoke-FalconRtr runscript "-CloudFile='list_bios' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY
