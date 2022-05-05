@@ -1,30 +1,25 @@
 ## DESCRIPTION
-Run a CLI-based tool and capture the output. Because of the potential for the script to time out when run using Real-time Response, results will be sent to your Humio instance (if 'Cloud' and 'Token' are provided) or written to log files in the temporary Rtr directory.
+Run a CLI-based tool and capture the output. Because of the potential for the script to time out when run using
+Real-time Response, results will be written to log files in the temporary Rtr directory.
 
 ## PARAMETER File
-Path to the file
+Path of the file to execute
 
 ## PARAMETER ArgumentList
 Arguments to supply during execution
 
 ## PARAMETER Delete
-Delete the tool when complete
-
-## PARAMETER Cloud
-Humio cloud base URL
-
-## PARAMETER Token
-Humio ingest token
+Delete 'File' when complete
 
 ## EXAMPLES
 
 ### REAL-TIME RESPONSE
 ```
-runscript -CloudFile="run_cli_tool" -CommandLine=```'{"File":"C:\\cast.exe","ArgumentList":"scan C:\\","Cloud":"https://cloud.community.humio.com","Token":"my_token"}'```
+runscript -CloudFile="run_cli_tool" -CommandLine=```'{"File":"C:\\cast.exe","ArgumentList":"scan C:\\"}'```
 ```
 ### PSFALCON
-```
-PS>$CommandLine = '```' + "'$(@{ File = 'C:\cast.exe'; ArgumentList = 'scan C:\'; Cloud = 'https://cloud.community.humio.com'; Token = 'my_token' } | ConvertTo-Json -Compress)'" + '```'
-PS>Invoke-FalconRtr runscript "-CloudFile='run_cli_tool' -CommandLine=$CommandLine" -HostIds <id>, <id>
+```powershell
+PS>$CommandLine = '```' + "'$(@{ File = 'C:\cast.exe'; ArgumentList = 'scan C:\'} | ConvertTo-Json -Compress)'" + '```'
+PS>Invoke-FalconRtr runscript "-CloudFile='run_cli_tool' -CommandLine=$CommandLine" -HostId <id>, <id>
 ```
 ### FALCONPY
