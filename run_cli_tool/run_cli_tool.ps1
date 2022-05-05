@@ -50,7 +50,7 @@ switch ($Humio) {
                         ,@{ timestamp = Get-Date -Format o; attributes = $A; rawstring = $_ }
                     }
                 }
-                $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @(@($E)[$i..($i + 199)]) }
+                $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($E) }
                 $Req = Invoke-WebRequest @Iwr -Body (ConvertTo-Json @($B) -Depth 8) -UseBasicParsing
                 if (!$Req -or $Req.StatusCode -ne 200) {
                     ConvertTo-Json @($B) -Depth 8 >> ($File -replace '\.log$','.json')
