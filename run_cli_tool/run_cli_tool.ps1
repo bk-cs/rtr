@@ -107,10 +107,9 @@ if ($Param.ArgumentList) { $Start['ArgumentList'] = $Param.ArgumentList }
 @(Start-Process @Start -PassThru).foreach{
     $_.PSObject.Properties.Add((New-Object PSNoteProperty('Output',$Rtr)))
     $Delete = if ($Param.Delete -eq $true) { '$true' } else { '$false' }
-    $ArgList = @('-Command &{',$Script,'}',$_.Id,$Delete) -join ' '
+    $ArgList = '-Command &{',$Script,'}',$_.Id,$Delete -join ' '
     if ($Humio.Cloud -and $Humio.Token) {
-        $ArgList = @($ArgList,$OutLog,$ErrLog,$Humio.Cloud,$Humio.Token) -join ' '
-        Write-Host $ArgList
+        $ArgList = $ArgList,$OutLog,$ErrLog,$Humio.Cloud,$Humio.Token -join ' '
         [void](Start-Process powershell.exe $ArgList -PassThru)
     }
     $_ | Select-Object Id,ProcessName,Output | ConvertTo-Json -Compress
