@@ -41,7 +41,7 @@ function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token
             $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
             $Json = $Script -replace '\.ps1',"_$((Get-Date).ToFileTimeUtc()).json"
             if ((Test-Path $Rtr -PathType Container) -eq $false) { [void](New-Item $Rtr -ItemType Directory) }
-            ConvertTo-Json @($B) -Depth 8 >> (Join-Path $Rtr $Json)
+            ConvertTo-Json @($Object) -Depth 8 >> (Join-Path $Rtr $Json)
         }
     }
 }
