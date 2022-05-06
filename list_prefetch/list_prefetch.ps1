@@ -37,19 +37,27 @@ function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token
             $Att['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
         }
         [object[]]$Event = @($Object).foreach{
-            $Clone = $Att.Clone()
-            @($_.PSObject.Properties).foreach{ $Clone[$_.Name]=$_.Value }
-            ,@{ timestamp = Get-Date -Format o; attributes = $Clone }
+            if ($_ -is [PSCustomObject]) {
+                $Clone = $Att.Clone()
+                @($_.PSObject.Properties).foreach{ $Clone[$_.Name]=$_.Value }
+                ,@{ timestamp = Get-Date -Format o; attributes = $Clone }
+            } else {
+                ,@{ timestamp = Get-Date -Format o; attributes = $Att; rawstring = [string]$_ }
+            }
         }
-        $Req = if ($Event) {
+        if ($Event) {
             $Body = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($Event) }
-            try { Invoke-WebRequest @Iwr -Body (ConvertTo-Json @($Body) -Depth 8) -UseBasicParsing } catch {}
-        }
-        if (!$Req -or $Req.StatusCode -ne 200) {
-            $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-            $Json = $Script -replace '\.ps1',"_$((Get-Date).ToFileTimeUtc()).json"
-            if ((Test-Path $Rtr -PathType Container) -eq $false) { [void](New-Item $Rtr -ItemType Directory) }
-            ConvertTo-Json @($Object) -Depth 8 >> (Join-Path $Rtr $Json)
+            $Req = try {
+                Invoke-WebRequest @Iwr -Body (ConvertTo-Json @($Body) -Depth 8) -UseBasicParsing
+            } catch {}
+            if (!$Req -or $Req.StatusCode -ne 200) {
+                $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
+                $Json = $Script -replace '\.ps1',"_$((Get-Date).ToFileTimeUtc()).json"
+                if ((Test-Path $Rtr -PathType Container) -eq $false) {
+                    [void](New-Item $Rtr -ItemType Directory)
+                }
+                ConvertTo-Json @($Object) -Depth 8 >> (Join-Path $Rtr $Json)
+            }
         }
     }
 }
