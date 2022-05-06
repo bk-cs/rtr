@@ -1,4 +1,4 @@
-$Humio = @{ Cloud = 'https://cloud.community.humio.com'; Token = '76c5ebe9-8e68-4f03-a2fb-de10d933215f' }
+$Humio = @{ Cloud = ''; Token = '' }
 switch ($Humio) {
     { $_.Cloud -and $_.Cloud -notmatch '/$' } { $_.Cloud += '/' }
     { ($_.Cloud -and !$_.Token) -or ($_.Token -and !$_.Cloud) -or (!$_.Token -and !$_.Cloud) } {
