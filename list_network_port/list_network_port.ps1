@@ -18,30 +18,30 @@ switch ($Humio) {
         }
     }
 }
-function sendlist ([object]$Obj,[object]$Humio,[string]$Script) {
-    if ($Obj -and $Humio.Cloud -and $Humio.Token) {
-        $Iwr = @{ Uri = @($Humio.Cloud,'api/v1/ingest/humio-structured/') -join $null; Method = 'post';
-            Headers = @{ Authorization = @('Bearer',$Humio.Token) -join ' '; ContentType = 'application/json' }}
-        $A = @{ script = $Script; host = [System.Net.Dns]::GetHostName() }
-        $R = reg query 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
-        if ($R) {
-            $A['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
-            $A['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
+function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token) {
+    if ($Object -and $Cloud -and $Token) {
+        $Iwr = @{ Uri = $Cloud,'api/v1/ingest/humio-structured/' -join $null; Method = 'post';
+            Headers = @{ Authorization = 'Bearer',$Token -join ' '; ContentType = 'application/json' }}
+        $Att = @{ host = [System.Net.Dns]::GetHostName(); script = $Script }
+        $Reg = reg query 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
+        if ($Reg) {
+            $Att['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
+            $Att['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
         }
-        $E = @($Obj).foreach{
-            $C = $A.Clone()
-            @($_.PSObject.Properties).foreach{ $C[$_.Name]=$_.Value }
-            ,@{ timestamp = Get-Date -Format o; attributes = $C }
+        [object[]]$Event = @($Object).foreach{
+            $Clone = $Att.Clone()
+            @($_.PSObject.Properties).foreach{ $Clone[$_.Name]=$_.Value }
+            ,@{ timestamp = Get-Date -Format o; attributes = $Clone }
         }
-        for ($i = 0; $i -lt ($E | Measure-Object).Count; $i += 200) {
-            $B = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @(@($E)[$i..($i + 199)]) }
-            $Req = try { Invoke-WebRequest @Iwr -Body (ConvertTo-Json @($B) -Compress) -UseBasicParsing } catch {}
-            if ($Req.StatusCode -ne 200) {
-                $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
-                $Json = $Script -replace '\.ps1',"_$((Get-Date).ToFileTimeUtc()).json"
-                if ((Test-Path $Rtr -PathType Container) -eq $false) { [void](New-Item $Rtr -ItemType Directory) }
-                ConvertTo-Json @($B) -Compress >> (Join-Path $Rtr $Json)
-            }
+        $Req = if ($Event) {
+            $Body = @{ tags = @{ source = 'crowdstrike-rtr_script' }; events = @($Event) }
+            try { Invoke-WebRequest @Iwr -Body (ConvertTo-Json @($Body) -Depth 8) -UseBasicParsing } catch {}
+        }
+        if (!$Req -or $Req.StatusCode -ne 200) {
+            $Rtr = Join-Path $env:SystemRoot 'system32\drivers\CrowdStrike\Rtr'
+            $Json = $Script -replace '\.ps1',"_$((Get-Date).ToFileTimeUtc()).json"
+            if ((Test-Path $Rtr -PathType Container) -eq $false) { [void](New-Item $Rtr -ItemType Directory) }
+            ConvertTo-Json @($B) -Depth 8 >> (Join-Path $Rtr $Json)
         }
     }
 }
@@ -56,5 +56,5 @@ $Out | ForEach-Object {
     $_.PSObject.Properties.Add((New-Object PSNoteProperty('OwningProcessName',($Process |
         Where-Object Id -eq $_.OwningProcess).Name)))
 }
-sendlist $Out $Humio 'list_network_port.ps1'
+shumio 'list_network_port.ps1' $Out $Humio.Cloud $Humio.Token
 $Out | ConvertTo-Json -Compress
