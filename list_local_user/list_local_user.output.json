@@ -17,12 +17,10 @@
       "type": "boolean"
     },
     "PasswordLastSet": {
-      "type": "integer",
-      "format": "date-time"
+      "type": "integer"
     },
     "PasswordExpires": {
-      "type": "integer",
-      "format": "date-time"
+      "type": "integer"
     },
     "PrincipalSource": {
       "type": "integer"

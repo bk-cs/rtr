@@ -9,16 +9,13 @@
       "type": "integer"
     },
     "CreationTime": {
-      "type": "integer",
-      "format": "date-time"
+      "type": "integer"
     },
     "LastWriteTime": {
-      "type": "integer",
-      "format": "date-time"
+      "type": "integer"
     },
     "LastAccessTime": {
-      "type": "integer",
-      "format": "date-time"
+      "type": "integer"
     },
     "Sha256": {
       "type": "string",

@@ -8,8 +8,7 @@
       "type": "string"
     },
     "StartTime": {
-      "type": "integer",
-      "format": "date-time"
+      "type": "integer"
     },
     "WorkingSet": {
       "type": "integer"
