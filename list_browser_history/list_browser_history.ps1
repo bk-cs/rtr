@@ -53,13 +53,13 @@ function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token
         }
     }
 }
+$Url = 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
 $Out = foreach ($User in (Get-CimInstance Win32_UserProfile | Where-Object { $_.localpath -notmatch
 'Windows' }).localpath) {
     foreach ($Path in @('Google\Chrome','Microsoft\Edge')) {
         $History = Join-Path $User "AppData\Local\$Path\User Data\Default\History"
         if (Test-Path $History) {
-            $Domain = '(htt(p|ps))://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'
-            Get-Content $History | Select-String -AllMatches $Domain | ForEach-Object { ($_.Matches).Value } |
+            Get-Content $History | Select-String -AllMatches $Url | ForEach-Object { ($_.Matches).Value } |
             Sort-Object -Unique | ForEach-Object {
                 if ($_ -match $Search) {
                     [PSCustomObject]@{
