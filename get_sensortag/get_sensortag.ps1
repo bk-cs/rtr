@@ -23,7 +23,7 @@ function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token
         $Iwr = @{ Uri = $Cloud,'api/v1/ingest/humio-structured/' -join $null; Method = 'post';
             Headers = @{ Authorization = 'Bearer',$Token -join ' '; ContentType = 'application/json' }}
         $Att = @{ host = [System.Net.Dns]::GetHostName(); script = $Script }
-        $Reg = reg query 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
+        $Reg = reg query 'HKLM\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
         if ($Reg) {
             $Att['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
             $Att['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
@@ -53,7 +53,7 @@ function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token
         }
     }
 }
-$Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-72' +
+$Key = 'HKLM\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-72' +
     '5362b67639}\Default'
 $Out = [PSCustomObject]@{ SensorTag = "$((((reg query $Key 2>$null) -match 'GroupingTags') -split
     'REG_SZ')[-1].Trim())" }

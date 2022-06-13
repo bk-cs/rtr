@@ -33,7 +33,7 @@ switch ($Humio) {
             [string[]]$Text = try { (Get-Content $File).Normalize() } catch {}
             if ($Text) {
                 $A = @{ host = [System.Net.Dns]::GetHostName(); script = 'run_cli_tool.ps1'; file = $File }
-                $R = reg query 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
+                $R = reg query 'HKLM\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
                 if ($R) {
                     $A['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
                     $A['aid'] = (($R -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()

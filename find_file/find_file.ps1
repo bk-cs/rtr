@@ -87,7 +87,7 @@ public static extern uint QueryDosDevice(
         if ((Test-Path $Rtr -PathType Container) -eq $false) { [void] (ni $Rtr -ItemType Directory) }
         $Json = $Script -replace '\.ps1', ('_' + [string] (Get-Date).ToFileTimeUtc() + '.json')
         $A = @{ script = $Script; host = [System.Net.Dns]::GetHostName() }
-        $R = reg query ('HKEY_LOCAL_MACHINE\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
+        $R = reg query ('HKLM\SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-' +
             '7058-48c9-a204-725362b67639}\Default') 2>$null
         if ($R) {
             $A['cid'] = (($R -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()

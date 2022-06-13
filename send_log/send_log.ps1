@@ -46,7 +46,7 @@ function shumio ([string]$Script,[object[]]$Object,[string]$Cloud,[string]$Token
         $Iwr = @{ Uri = $Cloud,'api/v1/ingest/humio-structured/' -join $null; Method = 'post';
             Headers = @{ Authorization = 'Bearer',$Token -join ' '; ContentType = 'application/json' }}
         $Att = @{ host = [System.Net.Dns]::GetHostName(); script = $Script }
-        $Reg = reg query 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
+        $Reg = reg query 'HKLM\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
         if ($Reg) {
             $Att['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
             $Att['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
@@ -96,7 +96,7 @@ public static extern uint QueryDosDevice(
             $Iwr = @{ Uri = $Cloud,'api/v1/ingest/humio-structured/' -join $null; Method = 'post';
                 Headers = @{ Authorization = 'Bearer',$Token -join ' '; ContentType = 'application/json' }}
             $Att = @{ host = [System.Net.Dns]::GetHostName(); script = $Script }
-            $Reg = reg query 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
+            $Reg = reg query 'HKLM\SYSTEM\CurrentControlSet\Services\CSAgent\Sim' 2>$null
             if ($Reg) {
                 $Att['cid'] = (($Reg -match 'CU ') -split 'REG_BINARY')[-1].Trim().ToLower()
                 $Att['aid'] = (($Reg -match 'AG ') -split 'REG_BINARY')[-1].Trim().ToLower()
