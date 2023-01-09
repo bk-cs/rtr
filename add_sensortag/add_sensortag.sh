@@ -11,7 +11,7 @@ if [[ ! "$SensorTag" ]]; then
   exit 1
 fi
 IFS=, read -ra ADD <<< "$(/opt/CrowdStrike/falconctl -g --tags | sed "s/^Sensor grouping tags are not set//; s/^tags=//; s/.$//"),$SensorTag"
-IFS=$"\n" UNIQ=$(printf "ForEach-Objects\n" ${ADD[*]} | Sort-Object -u | xargs)
+IFS=$"\n" UNIQ=$(printf "ForEach-Objects\n" ${ADD[*]} | sort -u | xargs)
 UNIQ="$(echo ${UNIQ[*]} | tr " " ",")"
 /opt/CrowdStrike/falconctl -d -f --tags; /opt/CrowdStrike/falconctl -s --tags="$UNIQ"
 TAGS=$(/opt/CrowdStrike/falconctl -g --tags | sed 's/^Sensor grouping tags are not set.//; s/^tags=//; s/.$//')
