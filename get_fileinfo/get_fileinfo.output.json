@@ -1,16 +1,13 @@
 ﻿{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft-07/schema",
   "properties": {
-    "OriginalFilename": {
+    "CompanyName": {
       "type": "string"
+    },
+    "CreationTime": {
+      "type": "integer"
     },
     "FileDescription": {
-      "type": "string"
-    },
-    "ProductName": {
-      "type": "string"
-    },
-    "CompanyName": {
       "type": "string"
     },
     "FileName": {
@@ -20,43 +17,36 @@
     "FileVersion": {
       "type": "string"
     },
-    "Sha256": {
-      "type": "string",
-      "format": "sha256"
+    "LastAccessTime": {
+      "type": "integer"
+    },
+    "LastWriteTime": {
+      "type": "integer"
     },
     "Length": {
       "type": "integer"
     },
-    "CreationTime": {
-      "type": "integer",
-      "format": "date-time"
-    },
-    "LastWriteTime": {
-      "type": "integer",
-      "format": "date-time"
-    },
-    "LastAccessTime": {
-      "type": "integer",
-      "format": "date-time"
-    },
     "Mode": {
       "type": "string"
     },
-    "ZoneId": {
+    "OriginalFilename": {
       "type": "string"
     },
-    "HostUrl": {
+    "ProductName": {
+      "type": "string"
+    },
+    "Sha256": {
       "type": "string",
-      "format": "url"
+      "format": "sha256"
     }
   },
   "required": [
     "Length",
     "CreationTime",
-    "Mode",
+    "LastWriteTime",
+    "LastAccessTime",
     "FileName",
     "Sha256"
   ],
-  "type":"object"
+  "type": "object"
 }
-
