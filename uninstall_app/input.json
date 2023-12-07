@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "properties": {
+    "Application": {
+      "type": "string"
+    },
+    "Version": {
+      "type": "string"
+    },
+    "Vendor": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "Application"
+  ],
+  "type": "object"
+}

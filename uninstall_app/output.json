@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "properties": {
+    "aid": {
+      "type": "string"
+    },
+    "cid": {
+      "type": "string"
+    },
+    "result": {
+      "items": {
+        "properties": {
+          "pid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pid",
+          "name",
+          "message"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "script": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "script",
+    "result",
+    "cid",
+    "aid"
+  ],
+  "type": "object"
+}
