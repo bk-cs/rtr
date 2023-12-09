@@ -1,5 +1,5 @@
-﻿{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
   "properties": {
     "Username": {
       "type": "string"
@@ -26,7 +26,10 @@
       "type": "boolean"
     },
     "Permissions": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type":"string"
+      }
     }
   },
   "required": [
