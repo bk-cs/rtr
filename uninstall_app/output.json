@@ -10,6 +10,9 @@
     "result": {
       "items": {
         "properties": {
+          "arg_list": {
+            "type": "string"
+          },
           "pid": {
             "type": "string"
           },
