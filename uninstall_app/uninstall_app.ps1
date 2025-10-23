@@ -81,14 +81,18 @@ function Uninstall-App{
             $Match['ArgumentList']="/x $GuidValue /q"
           }elseif($GetValue -match '^".+"\s'){
             [regex]::Match($GetValue,'^".+"').Value
-            $Match['ArgumentList']='"{0}"' -f [regex]::Match($GetValue,'(?<="\s).+$').Value
+            $Match['ArgumentList']=if($GuidValue){
+              '"{0}"' -f [regex]::Match($GetValue,'(?<="\s).+$').Value
+            }else{
+              [regex]::Match($GetValue,'(?<="\s).+$').Value
+            }
           }else{
             $GetValue
           }
         }
         if($Match.FilePath){
           $Message='Attempting removal of "{0}". Check "{1}" for logs.' -f $Application,$env:SystemDrive
-          start @Match|%{[hashtable]@{pid=$_.Id;name=$_.ProcessName;message=$Message}}
+          start @Match|%{[hashtable]@{pid=$_.Id;name=$_.ProcessName;arg_list=$Match.ArgumentList;message=$Message}}
         }
       }
     }
