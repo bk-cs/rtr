@@ -44,26 +44,25 @@ function Uninstall-App{
     $SubKey=$Key.OpenSubKey($Name)
     [string[]]$GetValue=$SubKey.GetValueNames()|?{$_ -match
       '^(Display(Name|Version)|Publisher|(Quiet)?UninstallString)$'}
-    if($GetValue -contains 'DisplayName' -and $SubKey.GetValue('DisplayName') -match $Application){
+    if($GetValue -contains 'DisplayName' -and $SubKey.GetValue('DisplayName') -eq $Application){
       if($GetValue -contains 'DisplayVersion' -and $Version){
         $DisplayVersion=$SubKey.GetValue('DisplayVersion')
         if($DisplayVersion -ne $Version){
-          throw ('Registry version "{0}" does not match input version "{1}".' -f $DisplayVersion,$Version)
+          throw('Registry version "{0}" does not match input version "{1}".' -f $DisplayVersion,$Version)
         }
       }
       if($GetValue -contains 'Publisher' -and $Vendor){
         $Publisher=$SubKey.GetValue('Publisher')
         if($Publisher -ne $Vendor){
-          throw ('Registry vendor "{0}" does not match input vendor "{1}".' -f $Publisher,$Vendor)
+          throw('Registry vendor "{0}" does not match input vendor "{1}".' -f $Publisher,$Vendor)
         }
       }
       if($GetValue -match 'UninstallString') {
-        $LogPath=(Join-Path $env:WinDir 'system32\drivers\CrowdStrike\Rtr')
         $Timestamp=Get-Date -Format o
-        @('stdout','stderr')|%{ nv -Name $_ -Value "$('UninstallApp',$Timestamp,$_ -join '_').log" }
+        @('stdout','stderr')|%{nv -Name $_ -Value "$('UninstallApp',$Timestamp,$_ -join '_').log"}
         [hashtable]$Match=@{
-          RedirectStandardOutput=(Join-Path $LogPath $StdOut)
-          RedirectStandardError=(Join-Path $LogPath $StdErr)
+          RedirectStandardOutput=(Join-Path $env:SystemDrive $StdOut)
+          RedirectStandardError=(Join-Path $env:SystemDrive $StdErr)
           PassThru=$true
         }
         $Match['FilePath']=if($GetValue -contains 'QuietUninstallString'){
@@ -88,8 +87,7 @@ function Uninstall-App{
           }
         }
         if($Match.FilePath){
-          $Message='Beginning removal of "{0}". Check "{1}" for result logs.' -f $Application,$LogPath
-          if(!(Test-Path $LogPath)){[void](ni $LogPath -ItemType Directory)}
+          $Message='Attempting removal of "{0}". Check "{1}" for logs.' -f $Application,$env:SystemDrive
           start @Match|%{[hashtable]@{pid=$_.Id;name=$_.ProcessName;message=$Message}}
         }
       }
@@ -109,7 +107,8 @@ try{
         $HKU.GetSubKeyNames()|?{(gwmi -Query "Select * FROM Win32_Account WHERE sid LIKE 'S-1-5-21%'"|
         select -ExpandProperty Sid) -contains $_}|%{
           @("$_\\Software","$_\\Software\\Wow6432Node")|%{
-            Uninstall-App $HKU.OpenSubKey("$_\\Microsoft\\Windows\\CurrentVersion\\Uninstall") @Param
+            $Key=try{$HKU.OpenSubKey("$_\\Microsoft\\Windows\\CurrentVersion\\Uninstall")}catch{}
+            if($Key){Uninstall-App $Key @Param}
           }
         }
       }
@@ -117,12 +116,17 @@ try{
       $HKLM=[Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($_,$env:ComputerName)
       if($HKLM){
         @('Software\\','Software\\Wow6432Node')|%{
-          Uninstall-App $HKLM.OpenSubKey("$_\\Microsoft\\Windows\\CurrentVersion\\Uninstall") @Param
+          $Key=try{$HKLM.OpenSubKey("$_\\Microsoft\\Windows\\CurrentVersion\\Uninstall")}catch{}
+          if($Key){Uninstall-App $Key @Param}
         }
       }
     }
   }
-  if($Output){Write-Json (Format-Result $Output UninstallApp)}else{throw "No result(s)."}
+  if($Output){
+    Write-Json (Format-Result $Output UninstallApp)
+  }else{
+    throw ('No applications found named "{0}".' -f $Param.Application)
+  }
 }catch{
   throw $_
 }
